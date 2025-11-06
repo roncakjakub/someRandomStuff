@@ -340,9 +340,15 @@ class VisualProductionAgent:
             scene_plans: Optional tool selection from Workflow Router
         
         Returns:
-            Image tool name (e.g., "flux_dev")
+            Image tool name (e.g., "flux_dev", "midjourney")
         """
-        # If we have scene_plans from router, use that
+        # CRITICAL: Scene 1 MUST use Midjourney for scroll-stopping opening frame
+        # This is a viral video best practice - override router if needed
+        if scene_number == 1:
+            self.logger.info("  🎬 Enforcing Midjourney for Scene 1 (opening frame)")
+            return "midjourney"
+        
+        # For other scenes, check router's recommendation
         if scene_plans:
             for plan in scene_plans:
                 # Handle both dict and dataclass formats
