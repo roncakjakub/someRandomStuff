@@ -1,0 +1,235 @@
+"""
+Pika Labs Video Tool (via fal.ai)
+
+Image-to-video generation with smooth morphs and creative effects using Pika v2.2.
+Best for dynamic transitions, morphs between states, and creative video effects.
+"""
+
+import os
+import time
+import requests
+from typing import Dict, Any, Optional
+from pathlib import Path
+from .base_tool import BaseTool
+
+class PikaVideoTool(BaseTool):
+    """
+    Tool for converting images to videos using Pika v2.2 via fal.ai.
+    
+    Uses fal.ai's Pika API for image-to-video generation.
+    Cost: ~$0.15-0.20 per video
+    Time: ~60-120 seconds per generation
+    """
+    
+    def __init__(self):
+        super().__init__(
+            name="pika_video",
+            description="Convert images to videos with smooth morphs and creative effects using Pika v2.2"
+        )
+        
+        # Get API key from environment
+        self.api_key = os.getenv("FAL_KEY")
+        if not self.api_key:
+            self.logger.warning("FAL_KEY not found in environment variables")
+        
+        self.base_url = "https://queue.fal.run"
+        self.model = "fal-ai/pika/v2.2/image-to-video"
+        
+    def validate_input(self, input_data: Dict[str, Any]) -> tuple[bool, Optional[str]]:
+        """
+        Validate input parameters.
+        
+        Required:
+            - image_path: Path to input image
+            - prompt: Text description of desired motion/animation
+        """
+        if not self.api_key:
+            return False, "FAL_KEY not set in environment variables"
+            
+        if "image_path" not in input_data:
+            return False, "Missing required field: image_path"
+        
+        if "prompt" not in input_data:
+            return False, "Missing required field: prompt"
+            
+        # Check if image file exists
+        image_path = input_data["image_path"]
+        if not os.path.exists(image_path):
+            return False, f"Image file not found: {image_path}"
+            
+        return True, None
+    
+    def execute(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Generate video from static image using Pika v2.2.
+        
+        Args:
+            input_data: Must contain:
+                - image_path: Path to input image
+                - prompt: Text description of desired motion
+                - output_dir: Optional custom output directory
+                - duration: Optional video duration (default: 5)
+                - resolution: Optional resolution (default: "720p")
+                - negative_prompt: Optional negative prompt
+                
+        Returns:
+            Dictionary with video file path and metadata
+        """
+        image_path = input_data["image_path"]
+        prompt = input_data["prompt"]
+        output_dir = input_data.get("output_dir")
+        duration = input_data.get("duration", 5)
+        resolution = input_data.get("resolution", "720p")
+        negative_prompt = input_data.get("negative_prompt", "")
+        
+        self.logger.info(f"Generating video from image: {image_path}")
+        self.logger.info(f"Motion prompt: {prompt[:100]}...")
+        self.logger.info(f"Settings: duration={duration}s, resolution={resolution}")
+        
+        # Step 1: Upload image to fal.ai
+        image_url = self._upload_image(image_path)
+        self.logger.info(f"Image uploaded: {image_url}")
+        
+        # Step 2: Submit generation request
+        request_id = self._submit_request(image_url, prompt, duration, resolution, negative_prompt)
+        self.logger.info(f"Request submitted: {request_id}")
+        
+        # Step 3: Poll for completion
+        self.logger.info("Waiting for video generation (this may take 60-120 seconds)...")
+        video_url = self._wait_for_completion(request_id)
+        self.logger.info(f"Video generated: {video_url}")
+        
+        # Step 4: Download the video
+        video_path = self._download_video(video_url, output_dir)
+        self.logger.info(f"Video saved to: {video_path}")
+        
+        return {
+            "video_path": video_path,
+            "video_url": video_url,
+            "source_image": image_path,
+            "prompt": prompt,
+            "duration": duration,
+            "resolution": resolution,
+            "model": self.model,
+            "cost_estimate": 0.15,  # Approximate cost
+        }
+    
+    def _upload_image(self, image_path: str) -> str:
+        """Upload image to fal.ai storage and get URL."""
+        headers = {
+            "Authorization": f"Key {self.api_key}",
+        }
+        
+        # Read image file
+        with open(image_path, "rb") as f:
+            files = {"file": f}
+            
+            response = requests.post(
+                "https://fal.run/storage/upload",
+                headers=headers,
+                files=files,
+            )
+            response.raise_for_status()
+        
+        result = response.json()
+        return result["url"]
+    
+    def _submit_request(self, image_url: str, prompt: str, duration: int, 
+                       resolution: str, negative_prompt: str) -> str:
+        """Submit video generation request to fal.ai queue."""
+        headers = {
+            "Authorization": f"Key {self.api_key}",
+            "Content-Type": "application/json",
+        }
+        
+        payload = {
+            "image_url": image_url,
+            "prompt": prompt,
+            "duration": duration,
+            "resolution": resolution,
+        }
+        
+        if negative_prompt:
+            payload["negative_prompt"] = negative_prompt
+        
+        response = requests.post(
+            f"{self.base_url}/{self.model}",
+            headers=headers,
+            json=payload,
+        )
+        response.raise_for_status()
+        
+        result = response.json()
+        return result["request_id"]
+    
+    def _wait_for_completion(self, request_id: str, max_wait: int = 300) -> str:
+        """Poll request status until completion."""
+        headers = {
+            "Authorization": f"Key {self.api_key}",
+        }
+        
+        status_url = f"{self.base_url}/{self.model}/requests/{request_id}/status"
+        start_time = time.time()
+        
+        while True:
+            # Check if max wait time exceeded
+            if time.time() - start_time > max_wait:
+                raise TimeoutError(f"Video generation timed out after {max_wait} seconds")
+            
+            # Get request status
+            response = requests.get(status_url, headers=headers)
+            response.raise_for_status()
+            
+            result = response.json()
+            status = result["status"]
+            
+            if status == "COMPLETED":
+                # Get the result
+                result_url = f"{self.base_url}/{self.model}/requests/{request_id}"
+                result_response = requests.get(result_url, headers=headers)
+                result_response.raise_for_status()
+                
+                result_data = result_response.json()
+                return result_data["video"]["url"]
+                
+            elif status == "FAILED":
+                error = result.get("error", "Unknown error")
+                raise RuntimeError(f"Video generation failed: {error}")
+            
+            # Still processing, wait and retry
+            self.logger.debug(f"Request status: {status}, waiting...")
+            time.sleep(5)
+    
+    def _download_video(self, video_url: str, output_dir: Optional[str] = None) -> str:
+        """Download video from URL and save to disk."""
+        from datetime import datetime
+        import uuid
+        
+        # Determine output directory
+        if output_dir:
+            save_dir = Path(output_dir)
+        else:
+            save_dir = Path("output") / "pika_videos"
+        
+        save_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Generate unique filename
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        unique_id = str(uuid.uuid4())[:8]
+        filename = f"pika_{timestamp}_{unique_id}.mp4"
+        filepath = save_dir / filename
+        
+        # Download video
+        self.logger.info(f"Downloading video from {video_url}...")
+        response = requests.get(video_url, stream=True)
+        response.raise_for_status()
+        
+        with open(filepath, "wb") as f:
+            for chunk in response.iter_content(chunk_size=8192):
+                f.write(chunk)
+        
+        return str(filepath)
+
+
+# Export the tool
+__all__ = ["PikaVideoTool"]

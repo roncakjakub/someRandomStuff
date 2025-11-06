@@ -1,0 +1,64 @@
+{
+  "client": {
+    "name": "Artisan Coffee Co.",
+    "industry": "Coffee & Lifestyle",
+    "target_audience": "Urban millennials and Gen-Z (25-35) who value quality, sustainability, and authentic experiences",
+    
+    "visual_identity": {
+      "primary_colors": ["#8B4513", "#F5DEB3", "#FFFFFF"],
+      "secondary_colors": ["#2C1810", "#D4A574", "#E8D5C4"],
+      "style": "Rustic modern, warm, authentic, handcrafted aesthetic with natural textures",
+      "mood": "Cozy, inviting, artisanal, passionate, mindful",
+      "avoid": "Corporate sterile look, mass-produced feel, cold modern minimalism, artificial/synthetic aesthetics"
+    },
+    
+    "tone_of_voice": {
+      "personality": ["Passionate", "Knowledgeable", "Approachable", "Authentic", "Community-focused"],
+      "style": "Conversational yet informed, warm and friendly, storytelling-driven",
+      "language": "Simple and clear, warm and inviting, uses sensory descriptions, avoids jargon",
+      "avoid": ["Corporate speak", "Overly technical coffee terminology", "Pretentious or elitist tone", "Aggressive sales language"]
+    },
+    
+    "brand_values": [
+      "Sustainability - Ethical sourcing and environmental responsibility",
+      "Craftsmanship - Attention to detail in every cup",
+      "Community - Building connections through coffee",
+      "Quality over quantity - Small-batch excellence",
+      "Authenticity - Real people, real passion, real coffee"
+    ],
+    
+    "content_guidelines": {
+      "must_include": [
+        "Hands-on process and human element",
+        "Natural materials (wood, ceramic, glass)",
+        "Natural lighting when possible",
+        "Close-up details showing craftsmanship",
+        "Warm, inviting atmosphere"
+      ],
+      "must_avoid": [
+        "Automation or industrial processes",
+        "Mass production imagery",
+        "Artificial or synthetic materials",
+        "Cold, sterile environments",
+        "Generic stock photo aesthetics"
+      ],
+      "preferred_settings": [
+        "Wooden surfaces and natural textures",
+        "Cozy cafe interiors with warm lighting",
+        "Hands preparing coffee",
+        "Steam and pour-over shots",
+        "Coffee beans and brewing equipment close-ups"
+      ],
+      "brand_keywords": [
+        "Artisanal",
+        "Handcrafted",
+        "Sustainable",
+        "Community",
+        "Passion",
+        "Quality",
+        "Authentic",
+        "Mindful"
+      ]
+    }
+  }
+}

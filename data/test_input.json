@@ -1,0 +1,18 @@
+{
+  "topic": "morning coffee ritual",
+  "brand_hub": {
+    "tone_of_voice": "warm and inviting",
+    "colors": ["#8B4513", "#F5DEB3", "#FFFFFF"],
+    "values": "quality coffee, morning rituals, mindfulness",
+    "language": "sk",
+    "brand_name": "Coffee Moments",
+    "visual_style": "Cozy, cinematic, warm morning light"
+  },
+  "expected_output": {
+    "video_format": "9:16 vertical",
+    "duration": "15-30 seconds",
+    "num_scenes": "3-4",
+    "has_voiceover": true,
+    "language": "sk"
+  }
+}

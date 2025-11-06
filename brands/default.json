@@ -1,0 +1,35 @@
+{
+  "client": {
+    "name": "Generic Brand",
+    "industry": "General",
+    "target_audience": "General audience",
+    
+    "visual_identity": {
+      "primary_colors": [],
+      "secondary_colors": [],
+      "style": "Modern, clean, professional",
+      "mood": "Engaging, dynamic, appealing",
+      "avoid": "Nothing specific"
+    },
+    
+    "tone_of_voice": {
+      "personality": ["Professional", "Engaging", "Clear"],
+      "style": "Clear and direct",
+      "language": "Simple and accessible",
+      "avoid": []
+    },
+    
+    "brand_values": [
+      "Quality",
+      "Innovation",
+      "Customer focus"
+    ],
+    
+    "content_guidelines": {
+      "must_include": [],
+      "must_avoid": [],
+      "preferred_settings": [],
+      "brand_keywords": []
+    }
+  }
+}

@@ -1,0 +1,107 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Brand Identity Schema",
+  "description": "Schema for defining client brand identity, visual style, tone of voice, and content guidelines",
+  "type": "object",
+  "required": ["client"],
+  "properties": {
+    "client": {
+      "type": "object",
+      "required": ["name", "industry"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Client/brand name"
+        },
+        "industry": {
+          "type": "string",
+          "description": "Industry or business category"
+        },
+        "target_audience": {
+          "type": "string",
+          "description": "Primary target audience description"
+        },
+        "visual_identity": {
+          "type": "object",
+          "properties": {
+            "primary_colors": {
+              "type": "array",
+              "items": {"type": "string"},
+              "description": "Primary brand colors (hex codes)"
+            },
+            "secondary_colors": {
+              "type": "array",
+              "items": {"type": "string"},
+              "description": "Secondary brand colors (hex codes)"
+            },
+            "style": {
+              "type": "string",
+              "description": "Overall visual style (e.g., 'Modern minimalist', 'Rustic warm')"
+            },
+            "mood": {
+              "type": "string",
+              "description": "Desired mood/feeling of visuals"
+            },
+            "avoid": {
+              "type": "string",
+              "description": "Visual styles to avoid"
+            }
+          }
+        },
+        "tone_of_voice": {
+          "type": "object",
+          "properties": {
+            "personality": {
+              "type": "array",
+              "items": {"type": "string"},
+              "description": "Brand personality traits"
+            },
+            "style": {
+              "type": "string",
+              "description": "Communication style"
+            },
+            "language": {
+              "type": "string",
+              "description": "Language characteristics"
+            },
+            "avoid": {
+              "type": "array",
+              "items": {"type": "string"},
+              "description": "Language/tone to avoid"
+            }
+          }
+        },
+        "brand_values": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Core brand values"
+        },
+        "content_guidelines": {
+          "type": "object",
+          "properties": {
+            "must_include": {
+              "type": "array",
+              "items": {"type": "string"},
+              "description": "Elements that must be included in content"
+            },
+            "must_avoid": {
+              "type": "array",
+              "items": {"type": "string"},
+              "description": "Elements to avoid in content"
+            },
+            "preferred_settings": {
+              "type": "array",
+              "items": {"type": "string"},
+              "description": "Preferred visual settings/environments"
+            },
+            "brand_keywords": {
+              "type": "array",
+              "items": {"type": "string"},
+              "description": "Keywords that represent the brand"
+            }
+          }
+        }
+      }
+    }
+  }
+}
