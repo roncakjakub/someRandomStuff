@@ -230,17 +230,25 @@ class VisualProductionAgent:
         
         tool = self.image_tools[tool_name]
         
-        # Prepare tool input
-        tool_input = {
-            "prompt": prompt,
-            "aspect_ratio": "9:16",
-            "num_outputs": 1,
-            "output_dir": str(output_dir),  # Convert Path to string for JSON serialization
-        }
-        
-        # Add reference image if provided
-        if reference_image and tool_name in ["instant_character", "flux_kontext_pro"]:
-            tool_input["reference_image"] = reference_image
+        # Prepare tool input based on tool type
+        if tool_name in ["instant_character", "flux_kontext_pro"]:
+            # These tools have specific parameter names
+            tool_input = {
+                "prompt": prompt,
+                "image_size": "landscape_16_9",  # InstantCharacter uses image_size, not aspect_ratio
+                "output_path": str(output_dir),  # InstantCharacter uses output_path, not output_dir
+            }
+            # Add reference image if provided
+            if reference_image:
+                tool_input["reference_image_url"] = reference_image  # InstantCharacter uses reference_image_url
+        else:
+            # Other tools (Flux, Midjourney, etc.)
+            tool_input = {
+                "prompt": prompt,
+                "aspect_ratio": "9:16",
+                "num_outputs": 1,
+                "output_dir": str(output_dir),
+            }
         
         # Generate image
         result = tool.execute(tool_input)
