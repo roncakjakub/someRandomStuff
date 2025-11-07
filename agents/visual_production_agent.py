@@ -243,7 +243,7 @@ class VisualProductionAgent:
             tool_input["reference_image"] = reference_image
         
         # Generate image
-        result = tool.run(tool_input)
+        result = tool.execute(tool_input)
         
         # Extract image path - handle different return formats
         # Some tools return "images" (list), others return "image_path" (string)
@@ -600,7 +600,7 @@ class VisualProductionAgent:
         tool = self.video_tools[video_tool_name]
         
         # Generate video
-        result = tool.run({
+        result = tool.execute({
             "start_image": start_image,
             "end_image": end_image,
             "prompt": scene_description,
