@@ -646,9 +646,26 @@ class VisualProductionAgent:
         # Prepare tool input
         # Veo31FLF2VTool expects first_frame_url/last_frame_url, others expect start_image/end_image
         if video_tool_name == "veo31_flf2v":
+            import fal_client
+            import os
+            
+            # Upload frame images to fal.ai storage (Veo 3.1 needs public URLs)
+            first_frame_url = start_image
+            last_frame_url = end_image
+            
+            if os.path.exists(start_image):
+                self.logger.info(f"    Uploading first frame: {start_image}")
+                first_frame_url = fal_client.upload_file(start_image)
+                self.logger.info(f"    First frame uploaded: {first_frame_url}")
+            
+            if os.path.exists(end_image):
+                self.logger.info(f"    Uploading last frame: {end_image}")
+                last_frame_url = fal_client.upload_file(end_image)
+                self.logger.info(f"    Last frame uploaded: {last_frame_url}")
+            
             tool_input = {
-                "first_frame_url": start_image,
-                "last_frame_url": end_image,
+                "first_frame_url": first_frame_url,
+                "last_frame_url": last_frame_url,
                 "prompt": scene_description,
                 "aspect_ratio": "9:16",  # Vertical format for social media
             }
