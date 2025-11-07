@@ -112,10 +112,13 @@ class VideoAssemblyTool(BaseTool):
         filelist_path = target_dir / f"filelist_{unique_id}.txt"
         with open(filelist_path, "w") as f:
             for image in images:
-                f.write(f"file '{image}'\n")
+                # Convert to absolute path to avoid FFMPEG concat issues
+                abs_image_path = Path(image).resolve()
+                f.write(f"file '{abs_image_path}'\n")
                 f.write(f"duration {duration_per_image}\n")
             # Add last image again (FFMPEG concat quirk)
-            f.write(f"file '{images[-1]}'\n")
+            abs_last_image = Path(images[-1]).resolve()
+            f.write(f"file '{abs_last_image}'\n")
         
         # FFMPEG command to create video from images
         cmd = [

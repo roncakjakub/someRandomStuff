@@ -26,6 +26,18 @@ class CreativeStrategistAgent:
         self.model = OPENAI_MODEL
         self.logger = logging.getLogger(f"agents.{self.name}")
     
+    def _get_language_name(self, code: str) -> str:
+        """Convert language code to full name."""
+        languages = {
+            "sk": "Slovak",
+            "cs": "Czech",
+            "en": "English",
+            "de": "German",
+            "pl": "Polish",
+            "hu": "Hungarian"
+        }
+        return languages.get(code, code.upper())
+    
     def create_strategy(
         self,
         topic: str,
@@ -33,7 +45,8 @@ class CreativeStrategistAgent:
         research_insights: Dict[str, Any],
         selected_concept: Optional[Dict[str, Any]] = None,
         brand_identity: Optional[BrandIdentity] = None,
-        video_style: str = "cinematic"
+        video_style: str = "cinematic",
+        language: str = "sk"
     ) -> Dict[str, Any]:
         """
         Create comprehensive creative strategy and prompts for viral-style video.
@@ -49,7 +62,7 @@ class CreativeStrategistAgent:
         self.logger.info(f"Creating VIRAL-STYLE strategy for: {topic}")
         
         # Build context for GPT-4
-        context = self._build_viral_context(topic, brand_hub, research_insights, selected_concept, brand_identity, video_style)
+        context = self._build_viral_context(topic, brand_hub, research_insights, selected_concept, brand_identity, video_style, language)
         
         # Generate prompts using GPT-4
         prompts = self._generate_viral_prompts(context)
@@ -64,7 +77,8 @@ class CreativeStrategistAgent:
         research_insights: Dict[str, Any],
         selected_concept: Optional[Dict[str, Any]] = None,
         brand_identity: Optional[BrandIdentity] = None,
-        video_style: str = "cinematic"
+        video_style: str = "cinematic",
+        language: str = "sk"
     ) -> str:
         """Build context for viral-style content creation."""
         context = f"""
@@ -110,6 +124,10 @@ Notice:
 - FAST PACING (new idea every 2-3 seconds)
 
 ===== VOICEOVER SCRIPT REQUIREMENTS =====
+
+**LANGUAGE:** Generate voiceover text in {self._get_language_name(language)} language.
+- Visual prompts: Keep in English (for better AI image/video generation)
+- Voiceover segments: Write in {self._get_language_name(language)} (language code: {language})
 
 STRUCTURE (Hook → Value → Proof → CTA):
 1. HOOK (0-3s): Grab attention immediately
@@ -238,7 +256,16 @@ Generate a JSON structure with:
 - "transition" - smooth morph between two different states/objects/scenes
 - "abstract" - artistic/abstract visuals
 
-**RULE:** If you can't see the person's face clearly, use "object" not "human_action"
+**RULES FOR CONTENT_TYPE:**
+1. If you can't see the person's face clearly → use "object" not "human_action"
+2. Hands/arms interacting with objects (pouring, holding, picking) → use "object"
+3. Only use "human_action" if the person (face/body) is the MAIN FOCUS of the scene
+
+**EXAMPLES:**
+- "Handpicking coffee beans" → "object" (hands visible, but beans are focus)
+- "Pouring water" → "object" (hands visible, but water/cup is focus)
+- "Person drinking coffee" → "human_action" (person's face/expression is focus)
+- "Close-up of face smiling" → "human_portrait" (face is main subject)
 
 **NEW: TRANSITION SCENES (PikaMorph Feature)**
 
@@ -336,12 +363,15 @@ Focus on beautiful motion and cinematography. NO consistent characters needed.
    - Cinematic, dramatic, scroll-stopping
    
 2. **Scene 2+ (Motion):**
-   - Tool: "flux_dev" or "flux_pro"
+   - Tool: "flux_dev" or "flux_pro" (NEVER seedream4)
    - Focus on objects, nature, products, abstract visuals
    - Content types: "object", "product", "abstract", "text"
-   - **IMPORTANT:** Use "object" even if hands/arms visible (e.g., pouring, holding)
-   - Only use "human_action" if person's face/body is the MAIN subject
-   - Avoid "human_portrait" and "human_action" (inconsistent faces look bad)
+   - **CRITICAL:** Use "object" for ALL scenes with hands/objects:
+     * "Handpicking coffee beans" → "object"
+     * "Pouring water" → "object"
+     * "Holding cup" → "object"
+   - AVOID "human_action" and "human_portrait" (inconsistent faces/people look bad)
+   - Exception: Use "human_action" ONLY if person's face is clearly visible AND is main focus
    
 3. **Transitions:**
    - Crossfade (300ms) between scenes

@@ -401,16 +401,12 @@ Consider:
 - This is a viral video best practice - opening frame must be scroll-stopping
 - Exception: Only use flux_schnell if budget preset AND no midjourney available
 
-**Scenes 2-3 (Style Consistency):**
-- Should use seedream4 OR the same tool as Scene 1 for visual continuity
-- Maintains consistent lighting, color grading, and style
-- Prevents visual "drift" between opening and follow-up scenes
-
-**Scenes 4+ (Variety):**
+**Scenes 2+ (All Remaining Scenes):**
 - budget preset → flux_schnell (fastest, cheapest)
 - standard preset → flux_dev (balanced quality/cost)
 - premium preset → flux_pro or flux_dev
 - NEVER use ideogram unless text overlay needed
+- NEVER use seedream4 unless content_type is "human_portrait" or "human_action" AND video_style is "character"
 
 **VIDEO TOOL SELECTION BY CONTENT:**
 - If scene content_type is human_action/human_portrait → use minimax_hailuo

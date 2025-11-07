@@ -212,7 +212,9 @@ class SocialVideoWorkflow:
                 brand_hub=state["brand_hub"],
                 research_insights=state["research_insights"],
                 selected_concept=state.get("selected_concept"),
-                brand_identity=self.brand_identity
+                brand_identity=self.brand_identity,
+                video_style=self.video_style,
+                language=self.default_language
             )
             
             state["prompts"] = prompts
