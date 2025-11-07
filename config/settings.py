@@ -29,7 +29,7 @@ ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
 # Default voice: Peter (SK) - Multilingual male voice optimized for Slovak
 # Voice ID: KXmit7OSDv7UUSoiQegm
 # Alternative: 21m00Tcm4TlvDq8ikWAM (Rachel - English female)
-ELEVENLABS_VOICE_ID = os.getenv("ELEVENLABS_VOICE_ID", "d6IbhdqAKkXCCVuJjbie")
+ELEVENLABS_VOICE_ID = os.getenv("ELEVENLABS_VOICE_ID", "KXmit7OSDv7UUSoiQegm")
 APIFRAME_API_KEY = os.getenv("APIFRAME_API_KEY")
 IDEOGRAM_API_KEY = os.getenv("IDEOGRAM_API_KEY")
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
@@ -59,7 +59,9 @@ REPLICATE_MODELS = {
 }
 
 # ElevenLabs Configuration
-ELEVENLABS_MODEL = "eleven_v3"  # Supports Slovak and 28 other languages
+# eleven_v3 (alpha) - Most expressive model with emotion tags support
+# Supports 70+ languages including Slovak
+ELEVENLABS_MODEL = "eleven_v3"
 
 # ElevenLabs Emotion Tags (inline in text)
 # Supported tags: [sarcastically], [giggles], [whispers], [shouting], [sighs], [gasps], etc.

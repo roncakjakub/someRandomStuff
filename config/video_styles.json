@@ -1,0 +1,93 @@
+{
+  "character": {
+    "name": "Character Story",
+    "description": "Consistent character throughout video with smooth Pika transitions",
+    "best_for": ["tutorials", "vlogs", "lifestyle", "storytelling", "person-focused"],
+    "workflow": {
+      "scene_1": {
+        "image_tool": "midjourney",
+        "image_prompt_template": "Cinematic portrait, 9:16, {description}, {character_description}, morning light, hyper-realistic, film grain",
+        "transition": "pika_morph"
+      },
+      "scene_2_plus": {
+        "image_tool": "seedream4",
+        "image_prompt_template": "Same character from Scene 1. {description}. Maintain exact same person, clothing, and lighting style.",
+        "reference_scene": 1,
+        "transition": "pika_morph"
+      }
+    },
+    "character_consistency": {
+      "enabled": true,
+      "reference_scene": 1,
+      "character_prompt_prefix": "Same person from opening frame"
+    },
+    "transitions": {
+      "type": "pika_morph",
+      "between_all_scenes": true,
+      "duration": 1.0
+    },
+    "cost_per_scene": 0.20,
+    "generation_time_per_scene": 45
+  },
+  
+  "cinematic": {
+    "name": "Cinematic Scenes",
+    "description": "Beautiful cinematic motion, best for objects and nature",
+    "best_for": ["products", "food", "nature", "abstract", "no-characters"],
+    "workflow": {
+      "scene_1": {
+        "image_tool": "midjourney",
+        "image_prompt_template": "Cinematic shot, 9:16, {description}, hyper-realistic, film grain, dramatic lighting",
+        "video_tool": "minimax_hailuo"
+      },
+      "scene_2_plus": {
+        "image_tool": "flux_dev",
+        "image_prompt_template": "{description}. 9:16 vertical format, professional quality, cinematic",
+        "video_tool": "minimax_hailuo"
+      }
+    },
+    "character_consistency": {
+      "enabled": false
+    },
+    "transitions": {
+      "type": "crossfade",
+      "duration": 0.3
+    },
+    "cost_per_scene": 0.15,
+    "generation_time_per_scene": 30
+  },
+  
+  "hybrid": {
+    "name": "Hybrid Dynamic",
+    "description": "Smart routing based on content type - characters use Pika, objects use Minimax",
+    "best_for": ["mixed-content", "reviews", "how-to", "demonstrations"],
+    "workflow": {
+      "scene_1": {
+        "image_tool": "midjourney",
+        "image_prompt_template": "Cinematic shot, 9:16, {description}, hyper-realistic, film grain",
+        "video_tool_if_character": "pika_v2",
+        "video_tool_if_object": "minimax_hailuo"
+      },
+      "scene_2_plus": {
+        "image_tool_if_character": "seedream4",
+        "image_tool_if_object": "flux_dev",
+        "video_tool_if_character": "pika_v2",
+        "video_tool_if_object": "minimax_hailuo",
+        "reference_scene_if_character": 1
+      }
+    },
+    "character_consistency": {
+      "enabled": true,
+      "reference_scene": 1,
+      "only_for_character_scenes": true
+    },
+    "transitions": {
+      "type": "smart",
+      "character_to_character": "pika_morph",
+      "object_to_object": "crossfade",
+      "mixed": "crossfade"
+    },
+    "cost_per_scene": 0.18,
+    "generation_time_per_scene": 38
+  }
+}

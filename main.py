@@ -245,6 +245,14 @@ Examples:
         help="Background music volume (0.0-1.0, default 0.15 = 15%%)"
     )
     
+    parser.add_argument(
+        "--style",
+        type=str,
+        choices=["character", "cinematic", "hybrid"],
+        default="cinematic",
+        help="Video style preset: character (consistent person with Pika transitions), cinematic (beautiful motion), hybrid (smart mix)"
+    )
+    
     args = parser.parse_args()
     
     # Print banner
@@ -288,6 +296,7 @@ Examples:
     logger.info(f"Topic: {topic}")
     logger.info(f"Quality: {args.quality}")
     logger.info(f"Language: {args.language}")
+    logger.info(f"Style: {args.style}")
     
     # AI Router integration
     workflow_plan = None
@@ -319,7 +328,8 @@ Examples:
         run_output_dir=run_output_dir,
         brand_file=args.brand_file,
         background_music_path=args.background_music,
-        music_volume=args.music_volume
+        music_volume=args.music_volume,
+        video_style=args.style
     )
     
     # Run workflow

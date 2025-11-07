@@ -173,12 +173,12 @@ class VideoAssemblyTool(BaseTool):
         # Generate output filename
         output_filename = video_path.stem.replace("_no_audio", "") + "_final.mp4"
         output_path = video_path.parent / output_filename
-
+        
         # Check if background music file exists
         if background_music_path and not Path(background_music_path).exists():
             self.logger.warning(f"Background music file not found: {background_music_path}. Skipping music.")
             background_music_path = None
-
+        
         # If no background music, use simple audio addition
         if not background_music_path:
             cmd = [

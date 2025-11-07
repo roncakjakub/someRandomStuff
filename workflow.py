@@ -31,6 +31,7 @@ class WorkflowState(TypedDict, total=False):
     brand_identity: Optional[BrandIdentity]  # Brand identity object
     background_music_path: Optional[str]  # Path to background music file
     music_volume: float  # Background music volume (0.0-1.0)
+    video_style: str  # Video style preset (character/cinematic/hybrid)
     
     # Phase 1A: Research
     research_insights: Dict[str, Any]
@@ -80,7 +81,8 @@ class SocialVideoWorkflow:
         run_output_dir: str = None, 
         brand_file: Optional[str] = None,
         background_music_path: Optional[str] = None,
-        music_volume: float = 0.15
+        music_volume: float = 0.15,
+        video_style: str = "cinematic"
     ):
         """
         Initialize the workflow.
@@ -92,12 +94,16 @@ class SocialVideoWorkflow:
             brand_file: Optional brand identity file to load
             background_music_path: Optional path to background music file
             music_volume: Background music volume (0.0-1.0, default 0.15)
+            video_style: Video style preset ("character", "cinematic", "hybrid")
         """
         self.logger = logging.getLogger("workflow")
         self.run_output_dir = run_output_dir
         self.default_language = default_language
         self.background_music_path = background_music_path
         self.music_volume = music_volume
+        self.video_style = video_style
+        
+        self.logger.info(f"Workflow initialized with style: {video_style}")
         
         # Load brand identity if provided
         self.brand_identity = load_brand_identity(brand_file) if brand_file else None
@@ -170,7 +176,8 @@ class SocialVideoWorkflow:
                 research_data=state["research_insights"],
                 brand_identity=self.brand_identity,
                 num_concepts=3,
-                language=self.default_language
+                language=self.default_language,
+                video_style=state.get("video_style", "cinematic")
             )
             
             # Select recommended concept
@@ -321,6 +328,7 @@ class SocialVideoWorkflow:
             "run_output_dir": self.run_output_dir,
             "background_music_path": self.background_music_path,
             "music_volume": self.music_volume,
+            "video_style": self.video_style,
             "current_phase": "initialized",
             "errors": [],
         }

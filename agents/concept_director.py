@@ -41,7 +41,8 @@ class ConceptDirectorAgent:
         research_data: Dict[str, Any],
         brand_identity: Optional[BrandIdentity] = None,
         num_concepts: int = 3,
-        language: str = "en"
+        language: str = "sk",
+        video_style: str = "cinematic"
     ) -> Dict[str, Any]:
         """
         Generate multiple viral video concepts.
@@ -67,7 +68,8 @@ class ConceptDirectorAgent:
             research_data=research_data,
             brand_identity=brand_identity,
             num_concepts=num_concepts,
-            language=language
+            language=language,
+            video_style=video_style
         )
         
         # Generate concepts using GPT-4
@@ -127,7 +129,14 @@ IMPORTANT EXCLUSIONS:
 - DO NOT generate ASMR concepts (requires specialized audio equipment and techniques)
 - Focus on visual storytelling with voiceover narration
 - Concepts must work with AI-generated visuals and voice
-"""
+
+VIDEO STYLE AWARENESS:
+You will be told which video style to optimize for:
+- CHARACTER style: Concepts should feature a consistent person throughout (tutorials, vlogs, storytelling)
+- CINEMATIC style: Concepts should focus on objects, nature, products (no people or inconsistent people OK)
+- HYBRID style: Mix of both (some scenes with people, some without)
+
+Adjust your concepts to match the specified style."""
     
     def _build_concept_prompt(
         self,
@@ -135,7 +144,8 @@ IMPORTANT EXCLUSIONS:
         research_data: Dict[str, Any],
         brand_identity: Optional[BrandIdentity],
         num_concepts: int,
-        language: str
+        language: str,
+        video_style: str
     ) -> str:
         """Build the concept generation prompt."""
         
@@ -164,6 +174,7 @@ Generate {num_concepts} creative viral video concepts for the following topic.
 
 **TARGET PLATFORM:** TikTok, Instagram Reels, YouTube Shorts (30-60 second videos)
 **TARGET LANGUAGE:** {language}
+**VIDEO STYLE:** {video_style.upper()} - {'Consistent person throughout' if video_style == 'character' else 'Objects/nature focus' if video_style == 'cinematic' else 'Mix of people and objects'}
 
 **RESEARCH INSIGHTS:**
 Current Trends: {', '.join(trends[:5]) if trends else 'No specific trends'}

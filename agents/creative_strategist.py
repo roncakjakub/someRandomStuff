@@ -306,7 +306,7 @@ Enhance voiceover_script and voiceover_segment with inline emotion tags for dram
 - [sarcastic] for irony
 - [happy], [sad], [angry], [nervous], [calm] for emotional states
 
-Example: "e"
+Example: "Predstavte si [excited] úžasnú rannú kávu! [whispers] Tajomstvo je v čerstvých zrnkách... [giggles] Nie je to tak?"
 
 Use tags strategically to make voiceover MORE ENGAGING and EMOTIONAL."""
         

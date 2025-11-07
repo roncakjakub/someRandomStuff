@@ -118,15 +118,15 @@ class ApiframeMidjourneyTool(BaseTool):
             raise Exception(f"Apiframe API error: {response.status_code} - {response.text}")
         
         result = response.json()
-
+        
         # Check if response contains task ID
         if "id" not in result and "task_id" not in result:
             raise Exception(f"Apiframe API response missing task ID: {result}")
-
+        
         # Normalize response to always have 'id' field
         if "task_id" in result and "id" not in result:
             result["id"] = result["task_id"]
-
+        
         return result
     
     def _wait_for_completion(self, task_id: str, max_wait: int = 600) -> str:
@@ -152,12 +152,16 @@ class ApiframeMidjourneyTool(BaseTool):
             data = response.json()
             status = data.get("status")
             
+            # Debug: Log full response to understand structure
+            logger.debug(f"Apiframe response: {data}")
+            
             if status == "finished" or status == "completed":
                 # Return the first image URL from the result
+                # Apiframe returns image_urls array directly, not nested in result
                 images = data.get("image_urls", [])
                 if images:
                     return images[0]
-                raise Exception("No images in result")
+                raise Exception(f"No images in result. Response: {data}")
             elif status == "failed":
                 raise Exception(f"Generation failed: {data.get('error')}")
             
