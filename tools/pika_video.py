@@ -196,24 +196,24 @@ class PikaVideoTool(BaseTool):
             }
     
     def _upload_image(self, image_path: str) -> str:
-        """Upload image to fal.ai storage and get URL."""
-        headers = {
-            "Authorization": f"Key {self.api_key}",
-        }
-        
-        # Read image file
-        with open(image_path, "rb") as f:
-            files = {"file": f}
+        """Upload image to fal.ai storage and get URL using fal_client SDK."""
+        try:
+            import fal_client
             
-            response = requests.post(
-                "https://fal.run/storage/upload",
-                headers=headers,
-                files=files,
-            )
-            response.raise_for_status()
-        
-        result = response.json()
-        return result["url"]
+            # Configure fal_client with API key
+            os.environ["FAL_KEY"] = self.api_key
+            
+            # Upload file using fal_client SDK
+            url = fal_client.upload_file(image_path)
+            
+            self.logger.info(f"Image uploaded to fal.ai: {url}")
+            return url
+            
+        except ImportError:
+            raise RuntimeError("fal_client not installed. Install with: pip install fal-client")
+        except Exception as e:
+            self.logger.error(f"Failed to upload image to fal.ai: {e}")
+            raise
     
     def _submit_request(self, image_url: str, prompt: str, duration: int, 
                        resolution: str, negative_prompt: str) -> str:
