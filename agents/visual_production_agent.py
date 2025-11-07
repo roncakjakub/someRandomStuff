@@ -375,7 +375,8 @@ class VisualProductionAgent:
         scene_number: int,
         output_dir: str,
         suffix: str = "image",
-        image_tool_name: str = None
+        image_tool_name: str = None,
+        reference_image: str = None
     ) -> str:
         """
         Generate static image using specified image tool.
@@ -386,6 +387,7 @@ class VisualProductionAgent:
             output_dir: Output directory
             suffix: Filename suffix (e.g., "start", "end", "image")
             image_tool_name: Name of image tool to use (e.g., "flux_dev", "midjourney")
+            reference_image: Optional reference image path for character consistency (Seedream4)
         
         Returns:
             Path to generated image
@@ -399,12 +401,20 @@ class VisualProductionAgent:
             self.logger.warning(f"Image tool '{image_tool_name}' not found, using default '{self.default_image_tool}'")
             image_tool = self.image_tools[self.default_image_tool]
         
-        result = image_tool.run({
+        # Build tool input
+        tool_input = {
             "prompt": prompt,
             "output_dir": output_dir,
             "filename": f"scene_{scene_number:02d}_{suffix}.png",
             "aspect_ratio": "9:16",  # Force vertical format for social media
-        })
+        }
+        
+        # Add reference image if provided (for Seedream4 character consistency)
+        if reference_image:
+            tool_input["reference_image"] = reference_image
+            self.logger.info(f"Using reference image for character consistency: {reference_image}")
+        
+        result = image_tool.run(tool_input)
         
         # Handle different return formats
         if "image_path" in result:
@@ -489,6 +499,7 @@ class VisualProductionAgent:
         scene_images = []
         total_cost = 0.0
         total_time = 0
+        reference_image = None  # Will be set to Scene 1 image for character consistency
         
         for idx, scene in enumerate(scenes):
             scene_number = scene.get("number", idx + 1)
@@ -509,15 +520,27 @@ class VisualProductionAgent:
             
             self.logger.info(f"    Tool: {image_tool_name}")
             
+            # For PIKA style: Use Scene 1 as reference for character consistency
+            use_reference = None
+            if scene_number > 1 and reference_image and image_tool_name == "seedream4":
+                use_reference = reference_image
+                self.logger.info(f"    Using Scene 1 as reference for character consistency")
+            
             # Generate image
             start_time = time_module.time()
             image_path = self._generate_image(
                 prompt=scene_prompt,
                 scene_number=scene_number,
                 output_dir=output_dir,
-                image_tool_name=image_tool_name
+                image_tool_name=image_tool_name,
+                reference_image=use_reference
             )
             elapsed_time = time_module.time() - start_time
+            
+            # Save Scene 1 image as reference for subsequent scenes
+            if scene_number == 1:
+                reference_image = image_path
+                self.logger.info(f"    Scene 1 image saved as reference: {reference_image}")
             
             scene_images.append({
                 "scene_number": scene_number,
