@@ -236,7 +236,7 @@ class VisualProductionAgent:
             tool_input = {
                 "prompt": prompt,
                 "image_size": "landscape_16_9",  # InstantCharacter uses image_size, not aspect_ratio
-                "output_path": str(output_dir),  # InstantCharacter uses output_path, not output_dir
+                # NOTE: output_path removed - we'll handle downloading after generation
             }
             # Add reference image if provided
             if reference_image:
@@ -258,13 +258,38 @@ class VisualProductionAgent:
             result = tool.execute(tool_input)  # Pass dict as-is for other tools
         
         # Extract image path - handle different return formats
-        # Some tools return "images" (list), others return "image_path" (string)
+        # Some tools return "images" (list), others return "image_path" (string), others return "image_url"
         if "images" in result:
             image_paths = result["images"]
         elif "image_path" in result:
             image_paths = [result["image_path"]]
         elif "image_paths" in result:
             image_paths = result["image_paths"]
+        elif "image_url" in result:
+            # InstantCharacter/FluxKontext return image_url
+            # Download it and save locally
+            import requests
+            from pathlib import Path
+            import uuid
+            
+            image_url = result["image_url"]
+            
+            # Generate unique filename
+            seed = result.get("seed", uuid.uuid4().hex[:8])
+            filename = f"{tool_name}_{seed}.jpg"
+            local_path = Path(output_dir) / filename
+            
+            # Download image
+            self.logger.info(f"    Downloading image from {image_url}")
+            response = requests.get(image_url)
+            response.raise_for_status()
+            
+            # Save locally
+            with open(local_path, 'wb') as f:
+                f.write(response.content)
+            
+            self.logger.info(f"    Saved to {local_path}")
+            image_paths = [str(local_path)]
         else:
             raise Exception(f"Tool '{tool_name}' returned no images (result keys: {list(result.keys())})")
         
