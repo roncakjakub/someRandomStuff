@@ -416,13 +416,14 @@ Consider:
   * OR video_style is "pika" (for visual consistency across all scenes)
 
 **VIDEO TOOL SELECTION BY CONTENT:**
-- If scene content_type is human_action/human_portrait → use minimax_hailuo (best quality)
-- If scene content_type is object/product → use minimax_hailuo or luma_ray (prefer minimax for better quality/cost)
+- If scene content_type is human_action/human_portrait → use luma_ray (best I2V consistency)
+- If scene content_type is object/product → use luma_ray (best visual consistency)
 - If scene content_type is transition → use pika_v2
 - If budget mode → use wan_i2v
-- Default → use minimax_hailuo (best quality and value)
-- AVOID runway_gen4_turbo (minimax is better quality and cheaper)
-- Match tool quality to brand style (luxury → luma_ray, standard → minimax)
+- Default → use luma_ray (best image-to-video consistency)
+- PREFER luma_ray over minimax_hailuo (luma preserves image style better)
+- AVOID runway_gen4_turbo (no credits)
+- Match tool quality to brand style (premium → luma_ray, budget → minimax)
 
 Return JSON in this format:
 {{
