@@ -108,6 +108,10 @@ class VideoAssemblyTool(BaseTool):
         output_filename = f"video_{timestamp}_{unique_id}_no_audio.mp4"
         output_path = target_dir / output_filename
         
+        # Detect if inputs are videos or images
+        first_item = Path(images[0])
+        is_video = first_item.suffix.lower() in ['.mp4', '.mov', '.avi', '.mkv', '.webm']
+        
         # Create a temporary file list for FFMPEG concat
         filelist_path = target_dir / f"filelist_{unique_id}.txt"
         with open(filelist_path, "w") as f:
@@ -115,10 +119,14 @@ class VideoAssemblyTool(BaseTool):
                 # Convert to absolute path to avoid FFMPEG concat issues
                 abs_image_path = Path(image).resolve()
                 f.write(f"file '{abs_image_path}'\n")
-                f.write(f"duration {duration_per_image}\n")
-            # Add last image again (FFMPEG concat quirk)
-            abs_last_image = Path(images[-1]).resolve()
-            f.write(f"file '{abs_last_image}'\n")
+                if not is_video:
+                    # Only add duration for images, not videos
+                    f.write(f"duration {duration_per_image}\n")
+            
+            if not is_video:
+                # Add last image again (FFMPEG concat quirk for images only)
+                abs_last_image = Path(images[-1]).resolve()
+                f.write(f"file '{abs_last_image}'\n")
         
         # FFMPEG command to create video from images
         cmd = [
