@@ -1,0 +1,13 @@
+# Test Prompts for Image Generation
+
+# Simple test prompt
+A cup of coffee on a wooden table, morning light, cinematic
+
+# Character test prompt
+A person holding a cup of coffee, smiling, warm lighting, portrait
+
+# Environment test prompt
+Modern coffee shop interior, minimalist design, natural lighting
+
+# Object test prompt
+Close-up of coffee beans, macro photography, detailed texture

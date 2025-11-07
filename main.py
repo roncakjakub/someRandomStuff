@@ -248,9 +248,9 @@ Examples:
     parser.add_argument(
         "--style",
         type=str,
-        choices=["character", "cinematic", "pika", "hybrid"],
-        default="cinematic",
-        help="Video style preset: character (consistent person), cinematic (beautiful motion), pika (smooth morph transitions), hybrid (smart mix)"
+        choices=["character", "cinematic", "pika", "hybrid", "seedream", "kontext"],
+        default="hybrid",
+        help="Video style preset: character (consistent person), cinematic (beautiful motion), pika (smooth morph transitions), hybrid (smart mix), seedream (fast & cheap), kontext (environment consistency)"
     )
     
     args = parser.parse_args()

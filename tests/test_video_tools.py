@@ -28,7 +28,7 @@ from tools.pika_video import PikaVideoTool
 from tools.minimax_video import MinimaxVideoTool
 from tools.luma_video import LumaVideoTool
 from tools.wan_video import WanVideoTool
-from tools.replicate_flux_dev import FluxDevTool
+from tools.replicate_image import FluxDevTool
 
 # Setup logging
 logging.basicConfig(
