@@ -245,10 +245,19 @@ class VisualProductionAgent:
         # Generate image
         result = tool.run(tool_input)
         
-        # Extract image path
-        image_paths = result.get("image_paths", [])
+        # Extract image path - handle different return formats
+        # Some tools return "images" (list), others return "image_path" (string)
+        if "images" in result:
+            image_paths = result["images"]
+        elif "image_path" in result:
+            image_paths = [result["image_path"]]
+        elif "image_paths" in result:
+            image_paths = result["image_paths"]
+        else:
+            raise Exception(f"Tool '{tool_name}' returned no images (result keys: {list(result.keys())})")
+        
         if not image_paths:
-            raise Exception(f"Tool '{tool_name}' returned no images")
+            raise Exception(f"Tool '{tool_name}' returned empty image list")
         
         return image_paths[0]
     
