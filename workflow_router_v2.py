@@ -294,6 +294,10 @@ Return a JSON object with per-scene tool selection."""
             # Parse and validate the plan
             plan = self._parse_plan(result, num_scenes)
             
+            # Enforce PIKA style rules (hard constraint)
+            if video_style == "pika":
+                plan = self._enforce_pika_style(plan)
+            
             # Apply constraints
             plan = self._apply_constraints(plan, max_cost, max_time)
             
@@ -488,6 +492,43 @@ Return JSON in this format:
             estimated_time=total_time,
             quality_level=result.get("quality_level", "standard")
         )
+    
+    def _enforce_pika_style(self, plan: WorkflowPlan) -> WorkflowPlan:
+        """
+        Enforce PIKA style rules (hard constraint).
+        
+        PIKA style requirements:
+        - Scene 1: Midjourney (opening shot)
+        - Scenes 2+: Seedream4 (for character/visual consistency)
+        - Video tool: pika_v2 (for morph transitions)
+        
+        This overrides AI recommendations to ensure visual consistency.
+        """
+        logger.info("Enforcing PIKA style rules...")
+        
+        for scene_plan in plan.scene_plans:
+            # Scene 1: Use Midjourney
+            if scene_plan.scene_number == 1:
+                if scene_plan.image_tool != "midjourney":
+                    logger.info(f"  Scene {scene_plan.scene_number}: Changed {scene_plan.image_tool} → midjourney (PIKA rule)")
+                    scene_plan.image_tool = "midjourney"
+            
+            # Scenes 2+: Use Seedream4 for consistency
+            else:
+                if scene_plan.image_tool != "seedream4":
+                    logger.info(f"  Scene {scene_plan.scene_number}: Changed {scene_plan.image_tool} → seedream4 (PIKA rule)")
+                    scene_plan.image_tool = "seedream4"
+            
+            # All scenes: Use pika_v2 for video (morph transitions)
+            if scene_plan.video_tool != "pika_v2" and "pika_v2" in self.available_tools["video"]:
+                logger.info(f"  Scene {scene_plan.scene_number}: Changed {scene_plan.video_tool} → pika_v2 (PIKA rule)")
+                scene_plan.video_tool = "pika_v2"
+        
+        # Recalculate plan after changes
+        plan = self._recalculate_plan(plan)
+        logger.info(f"PIKA style enforced: {len(plan.scene_plans)} scenes, cost: ${plan.estimated_cost:.2f}")
+        
+        return plan
     
     def _apply_constraints(
         self,
