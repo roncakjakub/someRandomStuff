@@ -108,7 +108,7 @@ Key Moments: {', '.join(selected_concept.get('key_moments', []))}
 ===== YOUR MISSION =====
 
 Create a 15-30 second VIRAL-STYLE vertical video (9:16) with:
-- EXACTLY 8 FAST-PACED scenes (1.5-2.5 seconds each)
+- 6-10 FAST-PACED scenes (1.5-2.5 seconds each, 8 recommended)
 - PUNCHY, DIRECT voiceover (like the example below)
 - CINEMATIC visuals that make people STOP SCROLLING
 
@@ -117,12 +117,28 @@ Create a 15-30 second VIRAL-STYLE vertical video (9:16) with:
 **English Example:**
 "I spent six months testing AI tools. Here's what actually works. Midjourney? King for opening frames. Those cinematic shots that make people stop scrolling. This is your weapon. SeaDream 4 became my secret. Multiple shots that actually flow together. No more regenerating 50 times. Game changer."
 
+**Slovak Example (for coffee topic - Story Mode):**
+"Zelené kávové zrno dozrieva dva mesiace. Zber v zlatom svite. Praženie mení všetko. Vôňa naplní miestnosť. A potom? Teplý úsmev pri zdieľaní kávy."
+
+**Slovak Example (for tips/hacks - Punchy Mode):**
+"Testoval som 47 značiek kávy. Toto funguje. Praženie? Kľúčové. Teplota rozhoduje. Chuť sa mení. Toto je tajomstvo."
+
+**NOT like this (too poetic/documentary):**
+"❌ Osamelé zelené kávové zrno, dozrievajúce na konári. Zníkajú len dva ročné obdobia..."
+
+**STYLE FLEXIBILITY:**
+- **Story/Journey topics:** Can use storytelling tone (5-12 words per sentence)
+- **Tips/Hacks topics:** Use punchy style (3-7 words per sentence)
+- **Mix both:** Longer sentences for context + shorter for emphasis
+- **Avoid:** Too short (1-2 words) OR too long (15+ words)
+
 Notice:
-- SHORT sentences (3-7 words)
+- SENTENCE LENGTH: 5-12 words (not 1-3!)
 - DIRECT language ("Here's what works" not "I would like to share")
 - POWER WORDS ("King", "weapon", "secret", "game changer")
 - NO FLUFF (every word has purpose)
-- FAST PACING (new idea every 2-3 seconds)
+- NATURAL PACING (not too fast, not too slow)
+- **NO overly poetic descriptions or literary language**
 
 ===== VOICEOVER SCRIPT REQUIREMENTS =====
 
@@ -175,7 +191,7 @@ STYLE RULES:
 
 ===== VISUAL SCENE REQUIREMENTS =====
 
-You need to create prompts for EXACTLY 8 scenes using these AI tools:
+You need to create prompts for 6-10 scenes (8 recommended) using these AI tools:
 
 1. **Opening Frame** (Midjourney via Apiframe) ⭐ CRITICAL
    - Scene 1 MUST ALWAYS use Midjourney (tool: "midjourney")
@@ -242,7 +258,7 @@ Generate a JSON structure with:
       "voiceover_segment": "Next punchy line",
       "references_scene": 1  // Indicates style continuity
     }},
-    // ... EXACTLY 8 total scenes
+    // ... 6-10 total scenes (8 recommended)
   ],
   "text_overlays": [
     {{
@@ -385,6 +401,51 @@ Focus on beautiful motion and cinematography. NO consistent characters needed.
 
 **BEST FOR:** Products, food, nature, abstract concepts, anything without people."""
         
+        elif video_style == "pika":
+            return """**PIKA STYLE REQUIREMENTS:**
+
+Smooth morphing transitions between all scenes using Pika.
+
+1. **Scene 1 (Opening):**
+   - Tool: "midjourney"
+   - Cinematic, dramatic, scroll-stopping
+   - Mark as: "is_opening_frame": true
+   
+2. **Scene 2 (Consistency):**
+   - Tool: "seedream4" (maintains visual style from Scene 1)
+   - Prompt MUST start with: "Continue from Scene 1. Same lighting and cinematic style. {description}"
+   - Add: "references_scene": 1
+   - Content type: "object" (even if hands visible)
+   
+3. **Scenes 3-8 (Transitions):**
+   - Content type: "transition"
+   - Generate TWO prompts for each scene:
+     * "prompts": {"start": "...", "end": "..."}
+   - Start prompt: End state of previous scene
+   - End prompt: New scene state
+   - Example:
+     ```
+     "prompts": {
+       "start": "Close-up of green coffee cherry on branch, golden hour light",
+       "end": "Close-up of hand picking coffee cherry, golden hour light"
+     }
+     ```
+   - Tool will be selected by Router (flux_dev for images, pika_v2 for morph video)
+   
+4. **Visual Consistency:**
+   - Maintain similar lighting, color grading across scenes
+   - Smooth color transitions (green → brown → dark brown for coffee journey)
+   - Similar camera angles and composition
+
+5. **Transitions:**
+   - ALL scenes use Pika morph transitions
+   - Duration: 1.0-1.5 seconds per morph
+   - Smooth, cinematic, professional
+
+**BEST FOR:** Storytelling, transformations, journey, process, evolution (e.g., "life of coffee", "morning routine", "product creation").
+
+**CRITICAL:** Scenes 3-8 MUST have "content_type": "transition" and "prompts": {"start": "...", "end": "..."}."""
+        
         elif video_style == "hybrid":
             return """**HYBRID STYLE REQUIREMENTS:**
 
@@ -479,10 +540,10 @@ Use tags strategically to make voiceover MORE ENGAGING and EMOTIONAL."""
                         scene.get("tool", "flux")
                     )
             
-            # Ensure we have exactly 8 scenes
+            # Validate scene count
             scene_count = len(prompts.get("scenes", []))
-            if scene_count != 8:
-                self.logger.warning(f"Generated {scene_count} scenes, expected exactly 8")
+            if scene_count < 6 or scene_count > 10:
+                self.logger.warning(f"Generated {scene_count} scenes, expected 6-10 (8 recommended)")
             
             return prompts
             
