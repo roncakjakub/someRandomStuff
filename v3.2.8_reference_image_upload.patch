@@ -1,0 +1,34 @@
+diff --git a/tools/instant_character.py b/tools/instant_character.py
+index old..new 100644
+--- a/tools/instant_character.py
++++ b/tools/instant_character.py
+@@ -40,7 +40,9 @@ class InstantCharacterTool:
+         Args:
+             prompt: Description of the scene/action
+             reference_image_url: Optional reference image for character consistency
+-                                If None, generates new character from prompt
++                                Can be either:
++                                - Public URL (e.g., "https://example.com/image.png")
++                                - Local file path (will be uploaded automatically)
++                                If None, generates new character from prompt
+             image_size: Size preset or custom dimensions
+                        Options: "square_hd", "square", "portrait_4_3", "portrait_16_9",
+@@ -75,6 +77,17 @@ class InstantCharacterTool:
+         
+         # Add reference image if provided
+         if reference_image_url:
++            # Check if it's a local file path
++            if os.path.exists(reference_image_url):
++                print(f"📤 Uploading local reference image...")
++                print(f"   Local path: {reference_image_url}")
++                
++                # Upload to fal.ai storage
++                uploaded_url = fal_client.upload_file(reference_image_url)
++                
++                print(f"✅ Uploaded to: {uploaded_url}")
++                reference_image_url = uploaded_url
++            
+             request_data["image_url"] = reference_image_url
+             print(f"🎨 Generating with character reference...")
+-            print(f"   Reference: {reference_image_url}")
++            print(f"   Reference URL: {reference_image_url}")
