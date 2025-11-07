@@ -1,0 +1,36 @@
+diff --git a/agents/visual_production_agent.py b/agents/visual_production_agent.py
+index ed2b891..6c44925 100644
+--- a/agents/visual_production_agent.py
++++ b/agents/visual_production_agent.py
+@@ -235,7 +235,7 @@ class VisualProductionAgent:
+             "prompt": prompt,
+             "aspect_ratio": "9:16",
+             "num_outputs": 1,
+-            "output_dir": output_dir,
++            "output_dir": str(output_dir),  # Convert Path to string for JSON serialization
+         }
+         
+         # Add reference image if provided
+@@ -243,7 +243,7 @@ class VisualProductionAgent:
+             tool_input["reference_image"] = reference_image
+         
+         # Generate image
+-        result = tool.run(tool_input)
++        result = tool.execute(tool_input)
+         
+         # Extract image path - handle different return formats
+         # Some tools return "images" (list), others return "image_path" (string)
+@@ -600,11 +600,11 @@ class VisualProductionAgent:
+         tool = self.video_tools[video_tool_name]
+         
+         # Generate video
+-        result = tool.run({
++        result = tool.execute({
+             "start_image": start_image,
+             "end_image": end_image,
+             "prompt": scene_description,
+-            "output_dir": output_dir,
++            "output_dir": str(output_dir),  # Convert Path to string for JSON serialization
+         })
+         
+         # Estimate cost

@@ -235,7 +235,7 @@ class VisualProductionAgent:
             "prompt": prompt,
             "aspect_ratio": "9:16",
             "num_outputs": 1,
-            "output_dir": output_dir,
+            "output_dir": str(output_dir),  # Convert Path to string for JSON serialization
         }
         
         # Add reference image if provided
@@ -604,7 +604,7 @@ class VisualProductionAgent:
             "start_image": start_image,
             "end_image": end_image,
             "prompt": scene_description,
-            "output_dir": output_dir,
+            "output_dir": str(output_dir),  # Convert Path to string for JSON serialization
         })
         
         # Estimate cost
