@@ -66,9 +66,9 @@ class ElevenLabsVoiceTool(BaseTool):
         
         # Create VoiceSettings object
         voice_settings = VoiceSettings(
-            stability=voice_settings_dict.get("stability", 0.4),
+            stability=voice_settings_dict.get("stability", 0.0),
             similarity_boost=voice_settings_dict.get("similarity_boost", 0.75),
-            style=voice_settings_dict.get("style", 0.4),
+            style=voice_settings_dict.get("style", 0.0),
             use_speaker_boost=voice_settings_dict.get("use_speaker_boost", True)
         )
         
@@ -112,9 +112,9 @@ class ElevenLabsVoiceTool(BaseTool):
             Dictionary with voice settings
         """
         return {
-            "stability": 0.2,          # Very low for MAXIMUM emotion (0-1) - was 0.3
+            "stability": 0.0,          # Creative mode for MAXIMUM emotion (must be 0.0, 0.5, or 1.0)
             "similarity_boost": 0.8,   # Higher for better voice quality (0-1) - was 0.75
-            "style": 0.7,              # Very high for DRAMATIC expression (0-1) - was 0.6
+            "style": 0.0,              # Creative expression (must be 0.0, 0.5, or 1.0)
             "use_speaker_boost": True, # Enhanced clarity
         }
     

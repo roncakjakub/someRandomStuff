@@ -94,7 +94,7 @@ Key Moments: {', '.join(selected_concept.get('key_moments', []))}
 ===== YOUR MISSION =====
 
 Create a 15-30 second VIRAL-STYLE vertical video (9:16) with:
-- 8-10 FAST-PACED scenes (1.5-2 seconds each)
+- EXACTLY 8 FAST-PACED scenes (1.5-2.5 seconds each)
 - PUNCHY, DIRECT voiceover (like the example below)
 - CINEMATIC visuals that make people STOP SCROLLING
 
@@ -151,7 +151,7 @@ STYLE RULES:
 
 ===== VISUAL SCENE REQUIREMENTS =====
 
-You need to create prompts for 8-10 scenes using these AI tools:
+You need to create prompts for EXACTLY 8 scenes using these AI tools:
 
 1. **Opening Frame** (Midjourney via Apiframe) ⭐ CRITICAL
    - Scene 1 MUST ALWAYS use Midjourney (tool: "midjourney")
@@ -218,7 +218,7 @@ Generate a JSON structure with:
       "voiceover_segment": "Next punchy line",
       "references_scene": 1  // Indicates style continuity
     }},
-    // ... 8-10 total scenes
+    // ... EXACTLY 8 total scenes
   ],
   "text_overlays": [
     {{
@@ -230,13 +230,15 @@ Generate a JSON structure with:
 ```
 
 **IMPORTANT:** For each scene, set `content_type` correctly:
-- "human_action" - person doing something (hands, body movement)
-- "human_portrait" - face, person standing/sitting
-- "object" - inanimate objects in motion
-- "product" - product showcase
+- "human_action" - person's face/body is the MAIN subject (full body action, gestures)
+- "human_portrait" - face close-up, person standing/sitting (face is focus)
+- "object" - inanimate objects OR hands/arms interacting with objects (e.g., pouring, holding)
+- "product" - product showcase, unboxing, demonstration
 - "text" - text overlay scene
 - "transition" - smooth morph between two different states/objects/scenes
 - "abstract" - artistic/abstract visuals
+
+**RULE:** If you can't see the person's face clearly, use "object" not "human_action"
 
 **NEW: TRANSITION SCENES (PikaMorph Feature)**
 
@@ -337,7 +339,9 @@ Focus on beautiful motion and cinematography. NO consistent characters needed.
    - Tool: "flux_dev" or "flux_pro"
    - Focus on objects, nature, products, abstract visuals
    - Content types: "object", "product", "abstract", "text"
-   - Avoid "human_portrait" (inconsistent faces look bad)
+   - **IMPORTANT:** Use "object" even if hands/arms visible (e.g., pouring, holding)
+   - Only use "human_action" if person's face/body is the MAIN subject
+   - Avoid "human_portrait" and "human_action" (inconsistent faces look bad)
    
 3. **Transitions:**
    - Crossfade (300ms) between scenes
@@ -439,9 +443,10 @@ Use tags strategically to make voiceover MORE ENGAGING and EMOTIONAL."""
                         scene.get("tool", "flux")
                     )
             
-            # Ensure we have enough scenes
-            if len(prompts.get("scenes", [])) < 8:
-                self.logger.warning(f"Only {len(prompts['scenes'])} scenes generated, expected 8-10")
+            # Ensure we have exactly 8 scenes
+            scene_count = len(prompts.get("scenes", []))
+            if scene_count != 8:
+                self.logger.warning(f"Generated {scene_count} scenes, expected exactly 8")
             
             return prompts
             
