@@ -90,6 +90,7 @@ class VisualProductionAgent:
                 - prompts: Scenes from Creative Strategist
                 - scene_plans: Tool selection from Workflow Router (optional)
                 - run_output_dir: Output directory
+                - video_style: Video style preset (character/cinematic/pika/hybrid)
         
         Returns:
             Updated state with generated video clips
@@ -97,11 +98,13 @@ class VisualProductionAgent:
         prompts = state.get("prompts", {})
         scene_plans = state.get("scene_plans", [])
         output_dir = state.get("run_output_dir")
+        video_style = state.get("video_style", "cinematic")
         
         result = self.generate_visuals(
             prompts=prompts,
             scene_plans=scene_plans,
-            output_dir=output_dir
+            output_dir=output_dir,
+            video_style=video_style
         )
         
         # Update state
@@ -112,7 +115,8 @@ class VisualProductionAgent:
         self,
         prompts: Dict[str, Any],
         scene_plans: List[Dict[str, Any]] = None,
-        output_dir: str = None
+        output_dir: str = None,
+        video_style: str = "cinematic"
     ) -> Dict[str, Any]:
         """
         Generate animated video clips for all scenes.
@@ -121,6 +125,7 @@ class VisualProductionAgent:
             prompts: Prompts from Creative Strategist with scenes
             scene_plans: Optional tool selection from Workflow Router
             output_dir: Custom output directory
+            video_style: Video style preset (character/cinematic/pika/hybrid)
         
         Returns:
             Dictionary with:
@@ -149,7 +154,16 @@ class VisualProductionAgent:
         total_cost = 0.0
         total_time = 0
         
-        # Generate each scene
+        # Check if PIKA style - different workflow
+        if video_style == "pika":
+            self.logger.info("PIKA STYLE: Generating all images first, then creating Pika transitions...")
+            return self._generate_pika_style(
+                scenes=scenes,
+                scene_plans=scene_plans,
+                output_dir=output_dir
+            )
+        
+        # Standard workflow: generate each scene (image + video)
         for idx, scene in enumerate(scenes):
             scene_number = scene.get("number", idx + 1)
             scene_description = scene.get("description", "")
@@ -447,6 +461,123 @@ class VisualProductionAgent:
             "video_path": result["video_path"],
             "cost": result.get("cost_estimate", 0.15),
             "time": int(elapsed_time)
+        }
+    def _generate_pika_style(
+        self,
+        scenes: List[Dict[str, Any]],
+        scene_plans: List[Dict[str, Any]],
+        output_dir: str
+    ) -> Dict[str, Any]:
+        """
+        Generate PIKA style workflow:
+        1. Generate all images first (1 MJ + 7 Seedream4)
+        2. Create Pika morph transitions between consecutive images
+        
+        Args:
+            scenes: List of scenes from Creative Strategist
+            scene_plans: Tool selection from Router
+            output_dir: Output directory
+        
+        Returns:
+            Dictionary with scene_videos, total_cost, total_time
+        """
+        import time as time_module
+        
+        self.logger.info(f"PIKA WORKFLOW: Step 1/2 - Generating {len(scenes)} images...")
+        
+        # Step 1: Generate all images
+        scene_images = []
+        total_cost = 0.0
+        total_time = 0
+        
+        for idx, scene in enumerate(scenes):
+            scene_number = scene.get("number", idx + 1)
+            scene_prompt = scene.get("prompt", "")
+            scene_description = scene.get("description", "")
+            
+            if not scene_prompt:
+                self.logger.warning(f"Scene {scene_number} has empty prompt, skipping")
+                continue
+            
+            self.logger.info(f"  Generating image {scene_number}/{len(scenes)}: {scene_description}")
+            
+            # Get image tool from scene_plans
+            image_tool_name = self._get_image_tool_for_scene(
+                scene_number=scene_number,
+                scene_plans=scene_plans
+            )
+            
+            self.logger.info(f"    Tool: {image_tool_name}")
+            
+            # Generate image
+            start_time = time_module.time()
+            image_path = self._generate_image(
+                prompt=scene_prompt,
+                scene_number=scene_number,
+                output_dir=output_dir,
+                image_tool_name=image_tool_name
+            )
+            elapsed_time = time_module.time() - start_time
+            
+            scene_images.append({
+                "scene_number": scene_number,
+                "image_path": image_path,
+                "description": scene_description,
+                "time": int(elapsed_time)
+            })
+            
+            total_time += int(elapsed_time)
+            
+            # Estimate cost (rough)
+            if image_tool_name == "midjourney":
+                total_cost += 0.05
+            elif image_tool_name == "seedream4":
+                total_cost += 0.03
+            elif image_tool_name == "flux_dev":
+                total_cost += 0.02
+        
+        self.logger.info(f"PIKA WORKFLOW: Step 1 complete - {len(scene_images)} images generated")
+        
+        # Step 2: Create Pika morph transitions between consecutive images
+        self.logger.info(f"PIKA WORKFLOW: Step 2/2 - Creating {len(scene_images) - 1} Pika transitions...")
+        
+        scene_videos = []
+        
+        for i in range(len(scene_images) - 1):
+            start_scene = scene_images[i]
+            end_scene = scene_images[i + 1]
+            
+            transition_number = i + 1
+            
+            self.logger.info(f"  Transition {transition_number}/{len(scene_images) - 1}: Scene {start_scene['scene_number']} → Scene {end_scene['scene_number']}")
+            
+            # Create Pika morph
+            start_time = time_module.time()
+            
+            video_result = self._create_morph_video(
+                start_image=start_scene["image_path"],
+                end_image=end_scene["image_path"],
+                scene_description=f"{start_scene['description']} to {end_scene['description']}",
+                scene_number=transition_number,
+                output_dir=output_dir
+            )
+            
+            elapsed_time = time_module.time() - start_time
+            
+            scene_videos.append(video_result["video_path"])
+            total_cost += video_result.get("cost", 0.15)
+            total_time += int(elapsed_time)
+        
+        self.logger.info(f"PIKA WORKFLOW: Complete - {len(scene_videos)} transition videos created")
+        
+        return {
+            "scene_videos": scene_videos,
+            "scene_images": [img["image_path"] for img in scene_images],
+            "all_images": [img["image_path"] for img in scene_images],
+            "total_videos": len(scene_videos),
+            "total_images": len(scene_images),
+            "total_cost": total_cost,
+            "total_time": total_time
         }
     
     def _animate_image(

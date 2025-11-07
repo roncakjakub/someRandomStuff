@@ -272,21 +272,42 @@ class VideoAssemblyTool(BaseTool):
         output_filename = f"video_{timestamp}_{unique_id}_no_audio.mp4"
         output_path = target_dir / output_filename
         
+        # Get actual duration of each video clip using ffprobe
+        import json
+        clip_durations = []
+        for clip_path in video_clips:
+            try:
+                probe_cmd = [
+                    "ffprobe", "-v", "error",
+                    "-show_entries", "format=duration",
+                    "-of", "json",
+                    str(clip_path)
+                ]
+                probe_result = subprocess.run(probe_cmd, capture_output=True, text=True, check=True)
+                duration_data = json.loads(probe_result.stdout)
+                duration = float(duration_data["format"]["duration"])
+                clip_durations.append(duration)
+                self.logger.debug(f"Clip {Path(clip_path).name}: {duration:.2f}s")
+            except Exception as e:
+                self.logger.warning(f"Could not get duration for {clip_path}, assuming 5.0s: {e}")
+                clip_durations.append(5.0)
+        
         # Build complex filter for crossfades between all clips
         # Format: [0:v][1:v]xfade=transition=fade:duration=0.3:offset=4.7[v01];
         #         [v01][2:v]xfade=transition=fade:duration=0.3:offset=9.4[v02];
         
         filter_parts = []
         last_label = "0:v"
+        cumulative_offset = 0.0
         
         for i in range(1, len(video_clips)):
             current_label = f"v{i-1:02d}" if i > 1 else "0:v"
             next_input = f"{i}:v"
             output_label = f"v{i:02d}"
             
-            # Calculate offset: (clip_duration * i) - (transition_duration * i)
-            # Assuming each clip is ~5 seconds
-            offset = (5.0 * i) - (transition_duration * i)
+            # Calculate offset: cumulative duration of previous clips minus transition overlap
+            cumulative_offset += clip_durations[i-1] - transition_duration
+            offset = cumulative_offset
             
             filter_parts.append(
                 f"[{current_label}][{next_input}]xfade=transition=fade:duration={transition_duration}:offset={offset:.1f}[{output_label}]"

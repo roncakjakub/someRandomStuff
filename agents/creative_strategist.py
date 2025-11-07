@@ -404,47 +404,50 @@ Focus on beautiful motion and cinematography. NO consistent characters needed.
         elif video_style == "pika":
             return """**PIKA STYLE REQUIREMENTS:**
 
-Smooth morphing transitions between all scenes using Pika.
+Premium storytelling with Seedream4 visual consistency and Pika morph transitions.
+
+**WORKFLOW:**
+- 8 scenes = 8 images + 7 Pika transition videos
+- All scenes use Seedream4 (except Scene 1 = Midjourney)
+- Pika creates smooth morph between consecutive images
 
 1. **Scene 1 (Opening):**
    - Tool: "midjourney"
    - Cinematic, dramatic, scroll-stopping
    - Mark as: "is_opening_frame": true
+   - Content type: "object" or "product"
    
-2. **Scene 2 (Consistency):**
+2. **Scenes 2-8 (All Remaining):**
    - Tool: "seedream4" (maintains visual style from Scene 1)
    - Prompt MUST start with: "Continue from Scene 1. Same lighting and cinematic style. {description}"
    - Add: "references_scene": 1
    - Content type: "object" (even if hands visible)
+   - **DO NOT use "transition" content_type**
+   - **DO NOT generate dual prompts (start/end)**
    
-3. **Scenes 3-8 (Transitions):**
-   - Content type: "transition"
-   - Generate TWO prompts for each scene:
-     * "prompts": {"start": "...", "end": "..."}
-   - Start prompt: End state of previous scene
-   - End prompt: New scene state
-   - Example:
-     ```
-     "prompts": {
-       "start": "Close-up of green coffee cherry on branch, golden hour light",
-       "end": "Close-up of hand picking coffee cherry, golden hour light"
-     }
-     ```
-   - Tool will be selected by Router (flux_dev for images, pika_v2 for morph video)
-   
-4. **Visual Consistency:**
-   - Maintain similar lighting, color grading across scenes
-   - Smooth color transitions (green → brown → dark brown for coffee journey)
-   - Similar camera angles and composition
+3. **Visual Consistency:**
+   - ALL scenes reference Scene 1 for consistent style
+   - Maintain similar lighting, color grading, composition
+   - Smooth color evolution (green → brown → dark brown for coffee journey)
+   - Similar camera angles and framing
 
-5. **Transitions:**
-   - ALL scenes use Pika morph transitions
+4. **Transitions:**
+   - Pika will morph between consecutive images:
+     * Image 1 → Image 2 (Pika morph)
+     * Image 2 → Image 3 (Pika morph)
+     * ...
+     * Image 7 → Image 8 (Pika morph)
+   - Total: 7 transition videos
    - Duration: 1.0-1.5 seconds per morph
    - Smooth, cinematic, professional
 
 **BEST FOR:** Storytelling, transformations, journey, process, evolution (e.g., "life of coffee", "morning routine", "product creation").
 
-**CRITICAL:** Scenes 3-8 MUST have "content_type": "transition" and "prompts": {"start": "...", "end": "..."}."""
+**CRITICAL:** 
+- ALL scenes (2-8) use "seedream4" with "references_scene": 1
+- NO "transition" content_type
+- NO dual prompts (start/end)
+- Pika transitions are handled automatically by workflow"""
         
         elif video_style == "hybrid":
             return """**HYBRID STYLE REQUIREMENTS:**

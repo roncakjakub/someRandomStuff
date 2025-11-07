@@ -59,26 +59,24 @@
   
   "pika": {
     "name": "Pika Morph",
-    "description": "Smooth morphing transitions between all scenes using Pika",
+    "description": "Premium storytelling with Seedream4 consistency and Pika morph transitions",
     "best_for": ["smooth-storytelling", "transformations", "journey", "process", "evolution"],
     "workflow": {
       "scene_1": {
         "image_tool": "midjourney",
         "image_prompt_template": "Cinematic shot, 9:16, {description}, hyper-realistic, film grain, dramatic lighting",
-        "video_tool": "pika_v2"
+        "video_tool": "none"
       },
-      "scene_2": {
+      "scene_2_plus": {
         "image_tool": "seedream4",
         "image_prompt_template": "Continue from Scene 1. Same lighting and cinematic style. {description}",
         "reference_scene": 1,
-        "video_tool": "pika_v2"
+        "video_tool": "none"
       },
-      "scene_3_plus": {
-        "scene_type": "transition",
-        "image_tool": "flux_dev",
-        "generate_start_end": true,
-        "video_tool": "pika_v2",
-        "transition_type": "morph"
+      "transitions": {
+        "type": "pika_morph",
+        "between_consecutive_scenes": true,
+        "description": "Pika creates smooth morph between Scene N and Scene N+1"
       }
     },
     "character_consistency": {

@@ -406,7 +406,9 @@ Consider:
 - standard preset → flux_dev (balanced quality/cost)
 - premium preset → flux_pro or flux_dev
 - NEVER use ideogram unless text overlay needed
-- NEVER use seedream4 unless content_type is "human_portrait" or "human_action" AND video_style is "character"
+- Use seedream4 if:
+  * video_style is "character" AND content_type is "human_portrait" or "human_action"
+  * OR video_style is "pika" (for visual consistency across all scenes)
 
 **VIDEO TOOL SELECTION BY CONTENT:**
 - If scene content_type is human_action/human_portrait → use minimax_hailuo
