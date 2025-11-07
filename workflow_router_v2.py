@@ -294,6 +294,9 @@ Return a JSON object with per-scene tool selection."""
             # Parse and validate the plan
             plan = self._parse_plan(result, num_scenes)
             
+            # Validate style requirements (warnings only)
+            self._validate_style_requirements(plan, video_style, scenes)
+            
             # Enforce PIKA style rules (hard constraint)
             if video_style == "pika":
                 plan = self._enforce_pika_style(plan)
@@ -492,6 +495,60 @@ Return JSON in this format:
             estimated_time=total_time,
             quality_level=result.get("quality_level", "standard")
         )
+    
+    def _validate_style_requirements(self, plan: WorkflowPlan, video_style: str, scenes: List[Dict[str, Any]]) -> None:
+        """
+        Validate that scenes match style requirements.
+        Logs warnings if scenes don't match expected style.
+        
+        Args:
+            plan: Workflow plan
+            video_style: Video style (pika/cinematic/hybrid)
+            scenes: List of scene dictionaries
+        """
+        if video_style == "pika":
+            # PIKA requires all scenes to have character
+            for i, scene in enumerate(scenes, 1):
+                content_type = scene.get("content_type", "object")
+                if content_type not in ["human_portrait", "human_action"]:
+                    logger.warning(
+                        f"⚠️  PIKA style violation: Scene {i} has content_type '{content_type}' "
+                        f"but PIKA requires 'human_portrait' or 'human_action' (character in all scenes)!"
+                    )
+        
+        elif video_style == "cinematic":
+            # CINEMATIC should focus on products/objects (characters optional)
+            character_count = sum(
+                1 for scene in scenes
+                if scene.get("content_type") in ["human_portrait", "human_action"]
+            )
+            if character_count > len(scenes) * 0.5:
+                logger.warning(
+                    f"⚠️  CINEMATIC style suggestion: {character_count}/{len(scenes)} scenes have characters. "
+                    f"CINEMATIC style works best with product/object focus."
+                )
+        
+        elif video_style == "hybrid":
+            # HYBRID should have mix of character and product scenes
+            character_scenes = [
+                scene for scene in scenes
+                if scene.get("content_type") in ["human_portrait", "human_action"]
+            ]
+            product_scenes = [
+                scene for scene in scenes
+                if scene.get("content_type") in ["object", "product", "food", "nature"]
+            ]
+            
+            if not character_scenes:
+                logger.warning(
+                    f"⚠️  HYBRID style suggestion: No character scenes found. "
+                    f"HYBRID works best with mix of character AND product scenes."
+                )
+            if not product_scenes:
+                logger.warning(
+                    f"⚠️  HYBRID style suggestion: No product scenes found. "
+                    f"HYBRID works best with mix of character AND product scenes."
+                )
     
     def _enforce_pika_style(self, plan: WorkflowPlan) -> WorkflowPlan:
         """

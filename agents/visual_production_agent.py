@@ -369,6 +369,40 @@ class VisualProductionAgent:
         # Otherwise, use default based on quality setting
         return self.default_image_tool
     
+    def _should_use_reference(self, reference_type: str, scene_type: str) -> bool:
+        """
+        Determine if reference image should be used based on content types.
+        
+        Args:
+            reference_type: Content type of reference image (e.g., "human_portrait")
+            scene_type: Content type of current scene (e.g., "human_action")
+        
+        Returns:
+            True if reference should be used, False otherwise
+        
+        Logic:
+            - Human types (portrait/action) -> Use reference (same character)
+            - Product types (object/product/food/nature) -> NO reference (variety needed)
+            - Mixed types -> NO reference (different subjects)
+        """
+        if not reference_type or not scene_type:
+            return False
+        
+        # Define content type groups
+        human_types = {"human_portrait", "human_action"}
+        product_types = {"object", "product", "food", "nature", "abstract"}
+        
+        # Both are human types -> Use reference (same character)
+        if reference_type in human_types and scene_type in human_types:
+            return True
+        
+        # Both are product types -> NO reference (variety needed)
+        if reference_type in product_types and scene_type in product_types:
+            return False
+        
+        # Mixed types (human <-> product) -> NO reference
+        return False
+    
     def _generate_image(
         self,
         prompt: str,
@@ -500,11 +534,13 @@ class VisualProductionAgent:
         total_cost = 0.0
         total_time = 0
         reference_image = None  # Will be set to Scene 1 image for character consistency
+        reference_content_type = None  # Track content type of reference scene
         
         for idx, scene in enumerate(scenes):
             scene_number = scene.get("number", idx + 1)
             scene_prompt = scene.get("prompt", "")
             scene_description = scene.get("description", "")
+            scene_content_type = scene.get("content_type", "object")
             
             if not scene_prompt:
                 self.logger.warning(f"Scene {scene_number} has empty prompt, skipping")
@@ -518,13 +554,16 @@ class VisualProductionAgent:
                 scene_plans=scene_plans
             )
             
-            self.logger.info(f"    Tool: {image_tool_name}")
+            self.logger.info(f"    Tool: {image_tool_name}, Content type: {scene_content_type}")
             
             # For PIKA style: Use Scene 1 as reference for character consistency
             use_reference = None
             if scene_number > 1 and reference_image and image_tool_name == "seedream4":
-                use_reference = reference_image
-                self.logger.info(f"    Using Scene 1 as reference for character consistency")
+                if self._should_use_reference(reference_content_type, scene_content_type):
+                    use_reference = reference_image
+                    self.logger.info(f"    Using Scene 1 as reference (types match: {reference_content_type} -> {scene_content_type})")
+                else:
+                    self.logger.info(f"    NO reference (types differ: {reference_content_type} != {scene_content_type})")
             
             # Generate image
             start_time = time_module.time()
@@ -540,7 +579,8 @@ class VisualProductionAgent:
             # Save Scene 1 image as reference for subsequent scenes
             if scene_number == 1:
                 reference_image = image_path
-                self.logger.info(f"    Scene 1 image saved as reference: {reference_image}")
+                reference_content_type = scene_content_type
+                self.logger.info(f"    Scene 1 image saved as reference: {reference_image} (type: {reference_content_type})")
             
             scene_images.append({
                 "scene_number": scene_number,

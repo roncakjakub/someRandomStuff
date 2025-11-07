@@ -407,7 +407,15 @@ Focus on beautiful motion and cinematography. NO consistent characters needed.
         elif video_style == "pika":
             return """**PIKA STYLE REQUIREMENTS:**
 
-Premium storytelling with Seedream4 visual consistency and Pika morph transitions.
+**CRITICAL:** PIKA style requires a CONSISTENT MAIN CHARACTER/PERSON in ALL scenes!
+
+Premium character-driven storytelling with Seedream4 visual consistency and Pika morph transitions.
+
+**CHARACTER REQUIREMENT:**
+- ALL scenes MUST feature the SAME person/character
+- Focus on character journey, transformation, or day-in-the-life
+- Examples: "Jana's morning coffee ritual", "A barista's day", "Coffee lover's journey"
+- NO pure product/object scenes without the character
 
 **WORKFLOW:**
 - 8 scenes = 8 images + 7 Pika transition videos
@@ -416,38 +424,42 @@ Premium storytelling with Seedream4 visual consistency and Pika morph transition
 
 1. **Scene 1 (Opening):**
    - Tool: "midjourney"
+   - MUST feature the main character/person
    - Cinematic, dramatic, scroll-stopping
    - Mark as: "is_opening_frame": true
-   - Content type: "object" or "product"
+   - Content type: "human_portrait" or "human_action"
+   - Include detailed character description (age, hair, clothing, features)
    
 2. **Scenes 2-8 (All Remaining):**
-   - Tool: "seedream4" (maintains visual style from Scene 1)
-   - Prompt MUST start with: "Continue from Scene 1. Same lighting and cinematic style. {description}"
+   - Tool: "seedream4" (maintains character consistency from Scene 1)
+   - MUST feature the SAME character from Scene 1
+   - Prompt MUST include: "Same person as Scene 1. {detailed character description}. {action/scene description}"
    - Add: "references_scene": 1
-   - Content type: "object" (even if hands visible)
+   - Content type: "human_portrait" or "human_action"
    - **DO NOT use "transition" content_type**
    - **DO NOT generate dual prompts (start/end)**
    
-3. **Visual Consistency:**
-   - ALL scenes reference Scene 1 for consistent style
+3. **Character Consistency:**
+   - ALL scenes reference Scene 1 for same character
+   - Maintain same person (face, hair, clothing, age)
+   - Character can do different actions/poses
    - Maintain similar lighting, color grading, composition
-   - Smooth color evolution (green → brown → dark brown for coffee journey)
-   - Similar camera angles and framing
 
 4. **Transitions:**
    - Pika will morph between consecutive images:
-     * Image 1 → Image 2 (Pika morph)
-     * Image 2 → Image 3 (Pika morph)
+     * Image 1 (character) → Image 2 (same character) (Pika morph)
+     * Image 2 (same character) → Image 3 (same character) (Pika morph)
      * ...
-     * Image 7 → Image 8 (Pika morph)
    - Total: 7 transition videos
    - Duration: 1.0-1.5 seconds per morph
    - Smooth, cinematic, professional
 
-**BEST FOR:** Storytelling, transformations, journey, process, evolution (e.g., "life of coffee", "morning routine", "product creation").
+**BEST FOR:** Character stories, personal journeys, day-in-the-life, tutorials with host.
 
 **CRITICAL:** 
+- ALL scenes MUST have the SAME character/person!
 - ALL scenes (2-8) use "seedream4" with "references_scene": 1
+- NO pure product/object scenes
 - NO "transition" content_type
 - NO dual prompts (start/end)
 - Pika transitions are handled automatically by workflow"""
@@ -455,24 +467,73 @@ Premium storytelling with Seedream4 visual consistency and Pika morph transition
         elif video_style == "hybrid":
             return """**HYBRID STYLE REQUIREMENTS:**
 
-Smart mix of character scenes (Pika) and object scenes (Minimax).
+**CRITICAL:** HYBRID mixes character scenes (same person) AND product scenes (no person)!
 
-1. **Character Scenes:**
-   - If scene has consistent person: use "character_description" and "seedream4" with "references_scene": 1
-   - Content type: "human_action" or "human_portrait"
-   - Transition: Pika morph
-   
-2. **Object Scenes:**
-   - No character needed
-   - Tool: "flux_dev"
-   - Content type: "object", "product", "abstract"
-   - Transition: Crossfade
-   
-3. **Character Description (if any character scenes):**
-   - Add "character_description" field if at least one scene has a person
-   - Only apply to scenes with content_type "human_action" or "human_portrait"
+Smart mix of character-driven scenes (PIKA approach) and product-focused scenes (CINEMATIC approach).
 
-**BEST FOR:** Mixed content (person + product), reviews, demonstrations."""
+**SCENE GROUPS:**
+Group scenes by subject. Example structure:
+- Scene Group 1: Character scenes (woman waking, stretching) → PIKA approach
+- Scene Group 2: Product scenes (coffee beans, grinder) → CINEMATIC approach  
+- Scene Group 3: Character scenes (woman drinking, smiling) → PIKA approach
+
+**CHARACTER SCENES (PIKA Approach):**
+1. **First Character Scene:**
+   - Tool: "midjourney"
+   - MUST feature main character/person
+   - Include detailed character description (age, hair, clothing, features)
+   - Content type: "human_portrait" or "human_action"
+   - Mark as: "is_character_reference": true
+   
+2. **Subsequent Character Scenes:**
+   - Tool: "seedream4"
+   - MUST feature SAME character as first character scene
+   - Prompt MUST include: "Same person as character reference. {detailed character description}. {action}"
+   - Add: "references_scene": {first_character_scene_number}
+   - Content type: "human_portrait" or "human_action"
+   - Transition: Pika morph (between character scenes)
+
+**PRODUCT SCENES (CINEMATIC Approach):**
+1. **Product/Object Scenes:**
+   - Tool: "flux_dev" or "seedream4" (NO reference)
+   - NO character/person in scene
+   - Focus on objects, products, nature, food
+   - Content type: "object", "product", "food", "nature"
+   - NO reference image (each product scene is unique)
+   - Transition: Pika morph (smooth transitions)
+
+**SCENE GROUPING:**
+- Group consecutive character scenes together
+- Group consecutive product scenes together
+- Alternate between character groups and product groups
+- Example: [Character, Character] → [Product, Product] → [Character, Character]
+
+**TRANSITIONS:**
+- Within character group: Pika morph (same person morphing)
+- Within product group: Pika morph (product to product)
+- Between groups: Pika morph (character to product or vice versa)
+
+**CHARACTER CONSISTENCY:**
+- ALL character scenes use SAME person (reference first character scene)
+- Product scenes have NO character (variety OK)
+
+**EXAMPLE HYBRID STRUCTURE:**
+```
+Scene 1: Woman waking up (character reference) - Midjourney
+Scene 2: Woman stretching (same woman) - Seedream4 + ref
+Scene 3: Coffee beans close-up (no person) - Flux Dev
+Scene 4: Grinder in action (no person) - Flux Dev  
+Scene 5: Woman drinking coffee (same woman) - Seedream4 + ref
+Scene 6: Woman smiling (same woman) - Seedream4 + ref
+```
+
+**BEST FOR:** Mixed content (person + product), reviews, demonstrations, day-in-the-life with products.
+
+**CRITICAL:**
+- Character scenes: SAME person (use reference)
+- Product scenes: NO person (NO reference)
+- Group scenes by subject
+- Pika morph for all transitions"""
         
         else:
             return ""  # Default: no special instructions

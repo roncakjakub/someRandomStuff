@@ -131,12 +131,30 @@ IMPORTANT EXCLUSIONS:
 - Concepts must work with AI-generated visuals and voice
 
 VIDEO STYLE AWARENESS:
-You will be told which video style to optimize for:
-- CHARACTER style: Concepts should feature a consistent person throughout (tutorials, vlogs, storytelling)
-- CINEMATIC style: Concepts should focus on objects, nature, products (no people or inconsistent people OK)
-- HYBRID style: Mix of both (some scenes with people, some without)
+You will be told which video style to optimize for. This is CRITICAL - concepts MUST match the style!
 
-Adjust your concepts to match the specified style."""
+- PIKA style: 
+  * REQUIRES a consistent main character/person throughout ALL scenes
+  * Focus on character journey, transformation, or day-in-the-life
+  * Examples: "Jana's morning coffee ritual", "A barista's day", "Coffee lover's journey"
+  * ALL scenes must include the same person
+  * NO pure product/object scenes without the character
+
+- CINEMATIC style:
+  * Focus on objects, nature, products, landscapes
+  * NO consistent character needed (people optional, can be different)
+  * Focus on visual beauty, motion, aesthetics
+  * Examples: "The art of coffee", "From bean to cup", "Coffee craftsmanship"
+  * Scenes can be pure product shots, nature, objects
+
+- HYBRID style:
+  * Mix of character scenes AND product scenes
+  * Character scenes: Same person (like PIKA)
+  * Product scenes: No character (like CINEMATIC)
+  * Group scenes by subject (character group, product group, character group)
+  * Examples: "Morning with coffee" (woman waking → coffee beans → woman drinking)
+
+Adjust your concepts to STRICTLY match the specified style!"""
     
     def _build_concept_prompt(
         self,
@@ -174,7 +192,10 @@ Generate {num_concepts} creative viral video concepts for the following topic.
 
 **TARGET PLATFORM:** TikTok, Instagram Reels, YouTube Shorts (30-60 second videos)
 **TARGET LANGUAGE:** {language}
-**VIDEO STYLE:** {video_style.upper()} - {'Consistent person throughout' if video_style == 'character' else 'Objects/nature focus' if video_style == 'cinematic' else 'Mix of people and objects'}
+**VIDEO STYLE:** {video_style.upper()}
+
+**STYLE REQUIREMENTS (CRITICAL!):**
+{self._get_style_requirements(video_style)}
 
 **RESEARCH INSIGHTS:**
 Current Trends: {', '.join(trends[:5]) if trends else 'No specific trends'}
@@ -225,6 +246,42 @@ Return JSON in this format:
 }}
 """
         return prompt
+    
+    def _get_style_requirements(self, video_style: str) -> str:
+        """Get style-specific requirements for concept generation."""
+        
+        if video_style == "pika":
+            return """PIKA STYLE REQUIREMENTS:
+- MUST feature a consistent main character/person in ALL scenes
+- Focus on character journey, transformation, or day-in-the-life
+- Examples: "Jana's morning ritual", "A day with a barista", "Coffee lover's journey"
+- ALL scenes MUST include the same person doing different actions
+- NO pure product/object scenes without the character
+- Think: Character-driven storytelling
+"""
+        
+        elif video_style == "cinematic":
+            return """CINEMATIC STYLE REQUIREMENTS:
+- Focus on objects, nature, products, landscapes, craftsmanship
+- NO consistent character needed (people optional, can be different or none)
+- Focus on visual beauty, motion, aesthetics, artistry
+- Examples: "The art of coffee", "From bean to cup", "Coffee craftsmanship"
+- Scenes can be pure product shots, nature close-ups, object details
+- Think: Product-driven visual storytelling
+"""
+        
+        elif video_style == "hybrid":
+            return """HYBRID STYLE REQUIREMENTS:
+- Mix of character scenes AND product scenes
+- Character scenes: MUST feature the same person (like PIKA)
+- Product scenes: NO character, focus on objects/nature (like CINEMATIC)
+- Group scenes by subject (character group → product group → character group)
+- Example: "Morning with coffee" (woman waking → coffee beans close-up → woman drinking)
+- Think: Best of both worlds - character AND product storytelling
+"""
+        
+        else:
+            return f"Unknown style: {video_style}. Defaulting to CINEMATIC requirements."
     
     def _fallback_concepts(self, topic: str, language: str) -> Dict[str, Any]:
         """Generate fallback concepts if AI generation fails."""
