@@ -106,7 +106,9 @@ class Seedream4Tool(BaseTool):
         
         return {
             "success": True,
-            "image_paths": image_paths,
+            "images": image_paths,  # Standard format
+            "image_path": image_paths[0] if image_paths else None,  # Backward compatibility
+            "image_paths": image_paths,  # Legacy format
             "prompt": prompt,
             "model": "seedream4",
             "num_generated": len(image_paths)
