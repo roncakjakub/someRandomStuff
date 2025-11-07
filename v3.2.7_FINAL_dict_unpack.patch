@@ -1,0 +1,63 @@
+diff --git a/agents/visual_production_agent.py b/agents/visual_production_agent.py
+index ed2b891..440c4f3 100644
+--- a/agents/visual_production_agent.py
++++ b/agents/visual_production_agent.py
+@@ -230,20 +230,32 @@ class VisualProductionAgent:
+         
+         tool = self.image_tools[tool_name]
+         
+-        # Prepare tool input
+-        tool_input = {
+-            "prompt": prompt,
+-            "aspect_ratio": "9:16",
+-            "num_outputs": 1,
+-            "output_dir": output_dir,
+-        }
+-        
+-        # Add reference image if provided
+-        if reference_image and tool_name in ["instant_character", "flux_kontext_pro"]:
+-            tool_input["reference_image"] = reference_image
++        # Prepare tool input based on tool type
++        if tool_name in ["instant_character", "flux_kontext_pro"]:
++            # These tools have specific parameter names
++            tool_input = {
++                "prompt": prompt,
++                "image_size": "landscape_16_9",  # InstantCharacter uses image_size, not aspect_ratio
++                "output_path": str(output_dir),  # InstantCharacter uses output_path, not output_dir
++            }
++            # Add reference image if provided
++            if reference_image:
++                tool_input["reference_image_url"] = reference_image  # InstantCharacter uses reference_image_url
++        else:
++            # Other tools (Flux, Midjourney, etc.)
++            tool_input = {
++                "prompt": prompt,
++                "aspect_ratio": "9:16",
++                "num_outputs": 1,
++                "output_dir": str(output_dir),
++            }
+         
+         # Generate image
+-        result = tool.run(tool_input)
++        # InstantCharacter and FluxKontext expect individual parameters, not dict
++        if tool_name in ["instant_character", "flux_kontext_pro"]:
++            result = tool.execute(**tool_input)  # Unpack dict to kwargs
++        else:
++            result = tool.execute(tool_input)  # Pass dict as-is for other tools
+         
+         # Extract image path - handle different return formats
+         # Some tools return "images" (list), others return "image_path" (string)
+@@ -600,11 +612,11 @@ class VisualProductionAgent:
+         tool = self.video_tools[video_tool_name]
+         
+         # Generate video
+-        result = tool.run({
++        result = tool.execute({
+             "start_image": start_image,
+             "end_image": end_image,
+             "prompt": scene_description,
+-            "output_dir": output_dir,
++            "output_dir": str(output_dir),  # Convert Path to string for JSON serialization
+         })
+         
+         # Estimate cost

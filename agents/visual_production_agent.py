@@ -251,7 +251,11 @@ class VisualProductionAgent:
             }
         
         # Generate image
-        result = tool.execute(tool_input)
+        # InstantCharacter and FluxKontext expect individual parameters, not dict
+        if tool_name in ["instant_character", "flux_kontext_pro"]:
+            result = tool.execute(**tool_input)  # Unpack dict to kwargs
+        else:
+            result = tool.execute(tool_input)  # Pass dict as-is for other tools
         
         # Extract image path - handle different return formats
         # Some tools return "images" (list), others return "image_path" (string)
