@@ -4,7 +4,7 @@ Advanced image-to-image editing with environment and style consistency
 """
 
 import fal_client
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 import os
 
 
