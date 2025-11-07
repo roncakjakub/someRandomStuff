@@ -396,8 +396,11 @@ Focus on beautiful motion and cinematography. NO consistent characters needed.
    - Exception: Use "human_action" ONLY if person's face is clearly visible AND is main focus
    
 3. **Transitions:**
-   - Crossfade (300ms) between scenes
+   - Crossfade (300ms) between scenes (handled by Assembly Agent)
    - Smooth, professional
+   - **CRITICAL:** NEVER use content_type="transition" for CINEMATIC style!
+   - All scenes must have content_type: "object", "product", "abstract", or "text"
+   - Transitions are created automatically during assembly, NOT during scene generation
 
 **BEST FOR:** Products, food, nature, abstract concepts, anything without people."""
         
