@@ -101,9 +101,14 @@ class ApiframeMidjourneyTool(BaseTool):
             "Content-Type": "application/json"
         }
         
+        # Add --ar parameter to prompt (Midjourney native syntax)
+        # Apiframe may not respect aspect_ratio in payload, so we add it to prompt
+        if "--ar" not in prompt:
+            prompt = f"{prompt} --ar {aspect_ratio}"
+        
         payload = {
             "prompt": prompt,
-            "aspect_ratio": aspect_ratio,
+            "aspect_ratio": aspect_ratio,  # Keep for API compatibility
             "process_mode": "fast"  # or "relax" for cheaper
         }
         

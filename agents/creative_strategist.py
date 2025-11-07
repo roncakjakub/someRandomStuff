@@ -114,6 +114,7 @@ Create a 15-30 second VIRAL-STYLE vertical video (9:16) with:
 
 ===== EXAMPLE VIRAL SCRIPT STYLE =====
 
+**English Example:**
 "I spent six months testing AI tools. Here's what actually works. Midjourney? King for opening frames. Those cinematic shots that make people stop scrolling. This is your weapon. SeaDream 4 became my secret. Multiple shots that actually flow together. No more regenerating 50 times. Game changer."
 
 Notice:
@@ -166,6 +167,11 @@ STYLE RULES:
 - Passive voice
 - Filler words
 - Explanations (just state facts)
+- **Poetic/literary language** ("Osamelé zelené kávové zrno, dozrievajúce..." ❌)
+- **Documentary narration** (slow, descriptive, contemplative)
+- **Storytelling tone** (once upon a time, journey, etc.)
+
+**VIRAL STYLE = FAST, DIRECT, PUNCHY. NOT poetic or documentary!**
 
 ===== VISUAL SCENE REQUIREMENTS =====
 
