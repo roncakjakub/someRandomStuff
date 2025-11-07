@@ -7,15 +7,15 @@ import logging
 import time
 
 # Image generation tools
-from tools import FluxSchnellTool, FluxDevTool, FluxProTool
-from tools.midjourney import MidjourneyTool
+from tools.replicate_image import FluxSchnellTool, FluxDevTool, FluxProTool
+from tools.apiframe_midjourney import ApiframeMidjourneyTool
 from tools.instant_character import InstantCharacterTool
 from tools.flux_kontext_pro import FluxKontextProTool
 
 # Video generation tools
 from tools.veo31_flf2v import Veo31FLF2VTool
 from tools.wan_flf2v import WanFLF2VTool
-from tools.pika_video import PikaV2Tool
+from tools.pika_video import PikaVideoTool
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +44,7 @@ class VisualProductionAgent:
             "flux_schnell": FluxSchnellTool(),
             "flux_dev": FluxDevTool(),
             "flux_pro": FluxProTool(),
-            "midjourney": MidjourneyTool(),
+            "midjourney": ApiframeMidjourneyTool(),
             "instant_character": InstantCharacterTool(),
             "flux_kontext_pro": FluxKontextProTool(),
         }
@@ -53,7 +53,7 @@ class VisualProductionAgent:
         self.video_tools = {
             "veo31_flf2v": Veo31FLF2VTool(),
             "wan_flf2v": WanFLF2VTool(),
-            "pika_v2": PikaV2Tool(),
+            "pika_video": PikaVideoTool(),
         }
         
         # Set default tools based on quality
