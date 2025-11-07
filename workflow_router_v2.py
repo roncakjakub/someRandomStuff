@@ -125,6 +125,14 @@ class WorkflowRouterV2:
             use_cases=["morphs", "transitions", "creative effects"],
             best_for="Smooth transitions between states, dynamic morphs"
         ),
+        "wan_flf2v": ToolSpec(
+            name="wan_flf2v",
+            description="First-to-last frame morph transitions ($0.40/video)",
+            cost=0.40,
+            speed=60,
+            use_cases=["morphs", "character consistency", "smooth transitions"],
+            best_for="Character-consistent morph transitions (PIKA style)"
+        ),
         "minimax_hailuo": ToolSpec(
             name="minimax_hailuo",
             description="Realistic human motion and VFX ($0.30/video)",
@@ -193,6 +201,7 @@ class WorkflowRouterV2:
         
         if os.getenv("FAL_KEY"):
             available["video"].append("pika_v2")
+            available["video"].append("wan_flf2v")
         
         # Ken Burns is always available (local)
         available["video"].append("ken_burns")
@@ -576,10 +585,10 @@ Return JSON in this format:
                     logger.info(f"  Scene {scene_plan.scene_number}: Changed {scene_plan.image_tool} → seedream4 (PIKA rule)")
                     scene_plan.image_tool = "seedream4"
             
-            # All scenes: Use pika_v2 for video (morph transitions)
-            if scene_plan.video_tool != "pika_v2" and "pika_v2" in self.available_tools["video"]:
-                logger.info(f"  Scene {scene_plan.scene_number}: Changed {scene_plan.video_tool} → pika_v2 (PIKA rule)")
-                scene_plan.video_tool = "pika_v2"
+            # All scenes: Use wan_flf2v for video (morph transitions)
+            if scene_plan.video_tool != "wan_flf2v" and "wan_flf2v" in self.available_tools["video"]:
+                logger.info(f"  Scene {scene_plan.scene_number}: Changed {scene_plan.video_tool} → wan_flf2v (PIKA rule)")
+                scene_plan.video_tool = "wan_flf2v"
         
         # Recalculate plan after changes
         plan = self._recalculate_plan(plan)

@@ -21,6 +21,7 @@ from tools.runway_video import RunwayVideoTool
 from tools.pika_video import PikaVideoTool
 from tools.minimax_video import MinimaxVideoTool
 from tools.wan_video import WanVideoTool
+from tools.wan_flf2v import WanFLF2VTool
 
 logger = logging.getLogger(__name__)
 
@@ -75,6 +76,7 @@ class VisualProductionAgent:
             "pika_v2": PikaVideoTool(),
             "minimax_hailuo": MinimaxVideoTool(),
             "wan_i2v": WanVideoTool(),
+            "wan_flf2v": WanFLF2VTool(),
         }
         
         self.logger.info(f"Initialized with default image quality: {quality} ({self.default_image_tool})")
@@ -181,13 +183,18 @@ class VisualProductionAgent:
                     start_prompt = scene["prompts"]["start"]
                     end_prompt = scene["prompts"]["end"]
                     
-                    # Get image tool selection from scene_plans
+                    # Get tool selection from scene_plans
                     image_tool_name = self._get_image_tool_for_scene(
                         scene_number=scene_number,
                         scene_plans=scene_plans
                     )
+                    video_tool_name = self._get_video_tool_for_scene(
+                        scene_number=scene_number,
+                        content_type=content_type,
+                        scene_plans=scene_plans
+                    )
                     
-                    self.logger.info(f"  Selected image tool: {image_tool_name}")
+                    self.logger.info(f"  Selected tools: image={image_tool_name}, video={video_tool_name}")
                     
                     # Step 1: Generate start image
                     self.logger.info(f"  Step 1/3: Generating START image...")
@@ -209,14 +216,15 @@ class VisualProductionAgent:
                         image_tool_name=image_tool_name
                     )
                     
-                    # Step 3: Create morph video with Pika
-                    self.logger.info(f"  Step 3/3: Creating morph video with Pika...")
+                    # Step 3: Create morph video
+                    self.logger.info(f"  Step 3/3: Creating morph video with {video_tool_name}...")
                     video_result = self._create_morph_video(
                         start_image=start_image_path,
                         end_image=end_image_path,
                         scene_description=scene_description,
                         scene_number=scene_number,
-                        output_dir=output_dir
+                        output_dir=output_dir,
+                        video_tool_name=video_tool_name
                     )
                     
                     video_path = video_result["video_path"]
@@ -464,10 +472,11 @@ class VisualProductionAgent:
         end_image: str,
         scene_description: str,
         scene_number: int,
-        output_dir: str
+        output_dir: str,
+        video_tool_name: str = "wan_flf2v"
     ) -> Dict[str, Any]:
         """
-        Create morph video from two images using Pika.
+        Create morph video from two images using specified video tool.
         
         Args:
             start_image: Path to start image
@@ -475,22 +484,23 @@ class VisualProductionAgent:
             scene_description: Description for motion prompt
             scene_number: Scene number for filename
             output_dir: Output directory
+            video_tool_name: Name of video tool to use (default: wan_flf2v)
         
         Returns:
             Dictionary with video_path, cost, time
         """
         import time as time_module
         
-        # Get Pika tool
-        pika_tool = self.video_tools.get("pika_v2")
+        # Get video tool (default to wan_flf2v for morph transitions)
+        video_tool = self.video_tools.get(video_tool_name)
         
-        if not pika_tool:
-            raise Exception("Pika tool not available for morph generation")
+        if not video_tool:
+            raise Exception(f"{video_tool_name} tool not available for morph generation")
         
         start_time = time_module.time()
         
-        # Run Pika with dual images for morph
-        result = pika_tool.run({
+        # Run video tool with dual images for morph
+        result = video_tool.run({
             "start_image": start_image,
             "end_image": end_image,
             "prompt": scene_description or "smooth transition",
@@ -601,8 +611,15 @@ class VisualProductionAgent:
         
         self.logger.info(f"PIKA WORKFLOW: Step 1 complete - {len(scene_images)} images generated")
         
-        # Step 2: Create Pika morph transitions between consecutive images
-        self.logger.info(f"PIKA WORKFLOW: Step 2/2 - Creating {len(scene_images) - 1} Pika transitions...")
+        # Get video tool from scene_plans (should be wan_flf2v for PIKA style)
+        video_tool_name = self._get_video_tool_for_scene(
+            scene_number=1,
+            content_type="human",
+            scene_plans=scene_plans
+        )
+        
+        # Step 2: Create morph transitions between consecutive images
+        self.logger.info(f"PIKA WORKFLOW: Step 2/2 - Creating {len(scene_images) - 1} {video_tool_name} transitions...")
         
         scene_videos = []
         
@@ -614,7 +631,7 @@ class VisualProductionAgent:
             
             self.logger.info(f"  Transition {transition_number}/{len(scene_images) - 1}: Scene {start_scene['scene_number']} → Scene {end_scene['scene_number']}")
             
-            # Create Pika morph
+            # Create morph video
             start_time = time_module.time()
             
             video_result = self._create_morph_video(
@@ -622,7 +639,8 @@ class VisualProductionAgent:
                 end_image=end_scene["image_path"],
                 scene_description=f"{start_scene['description']} to {end_scene['description']}",
                 scene_number=transition_number,
-                output_dir=output_dir
+                output_dir=output_dir,
+                video_tool_name=video_tool_name
             )
             
             elapsed_time = time_module.time() - start_time
