@@ -126,3 +126,48 @@ class PikaVideoTool:
         except Exception as e:
             self.logger.error(f"Error in pika_video: {e}", exc_info=True)
             raise
+    
+    def run(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Backward compatibility wrapper for execute().
+        
+        Args:
+            params: Dict with keys:
+                - start_image: Path to start image
+                - end_image: Path to end image (optional, for morph)
+                - prompt: Text prompt
+                - duration: Video duration (default 3)
+                - output_dir: Output directory
+                - filename: Output filename
+        
+        Returns:
+            Dict with video_path and metadata
+        """
+        # Extract parameters
+        start_image = params.get("start_image")
+        end_image = params.get("end_image")
+        prompt = params.get("prompt", "")
+        duration = params.get("duration", 3)
+        output_dir = params.get("output_dir", ".")
+        filename = params.get("filename", "output.mp4")
+        
+        # Build output path
+        import os
+        output_path = os.path.join(output_dir, filename)
+        
+        # Call execute()
+        result = self.execute(
+            image_path=start_image,
+            end_image_path=end_image,
+            prompt=prompt,
+            duration=duration,
+            output_path=output_path,
+        )
+        
+        # Return in expected format
+        return {
+            "video_path": result["video_path"],
+            "video_url": result["video_url"],
+            "duration": result["duration"],
+            "prompt": result["prompt"],
+        }
