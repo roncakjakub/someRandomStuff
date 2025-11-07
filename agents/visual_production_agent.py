@@ -22,6 +22,11 @@ from tools.pika_video import PikaVideoTool
 from tools.minimax_video import MinimaxVideoTool
 from tools.wan_video import WanVideoTool
 from tools.wan_flf2v import WanFLF2VTool
+from tools.veo31_flf2v import Veo31FLF2VTool
+
+# Image generation tools (for character/environment consistency)
+from tools.instant_character import InstantCharacterTool
+from tools.flux_kontext_pro import FluxKontextProTool
 
 logger = logging.getLogger(__name__)
 
@@ -77,6 +82,13 @@ class VisualProductionAgent:
             "minimax_hailuo": MinimaxVideoTool(),
             "wan_i2v": WanVideoTool(),
             "wan_flf2v": WanFLF2VTool(),
+            "veo31_flf2v": Veo31FLF2VTool(),
+        }
+        
+        # Image tools for consistency (used in HYBRID/PIKA workflows)
+        self.consistency_tools = {
+            "instant_character": InstantCharacterTool(),
+            "flux_kontext_pro": FluxKontextProTool(),
         }
         
         self.logger.info(f"Initialized with default image quality: {quality} ({self.default_image_tool})")
@@ -156,10 +168,18 @@ class VisualProductionAgent:
         total_cost = 0.0
         total_time = 0
         
-        # Check if PIKA style - different workflow
+        # Check for special workflows
         if video_style == "pika":
             self.logger.info("PIKA STYLE: Generating all images first, then creating Pika transitions...")
             return self._generate_pika_style(
+                scenes=scenes,
+                scene_plans=scene_plans,
+                output_dir=output_dir
+            )
+        
+        if video_style == "hybrid":
+            self.logger.info("HYBRID STYLE: Auto scene detection with smart transitions...")
+            return self._generate_hybrid_style(
                 scenes=scenes,
                 scene_plans=scene_plans,
                 output_dir=output_dir
@@ -661,6 +681,211 @@ class VisualProductionAgent:
             "total_time": total_time
         }
     
+    def _generate_hybrid_style(
+    self,
+    scenes: List[Dict[str, Any]],
+    scene_plans: List[Dict[str, Any]],
+    output_dir: str
+    ) -> Dict[str, Any]:
+    """
+    Generate HYBRID style workflow:
+    1. Generate all images with scene-group-aware reference management
+    2. Create morph transitions within scene groups
+    3. Use hard cuts between scene groups
+    
+    Args:
+        scenes: List of scenes from Creative Strategist
+        scene_plans: Tool selection from Router (with scene_group and transition info)
+        output_dir: Output directory
+    
+    Returns:
+        Dictionary with scene_videos, total_cost, total_time
+    """
+    import time as time_module
+    
+    self.logger.info(f"HYBRID WORKFLOW: Step 1/3 - Generating {len(scenes)} images...")
+    
+    # Step 1: Generate all images with scene-group-aware reference
+    scene_images = []
+    total_cost = 0.0
+    total_time = 0
+    
+    # Track reference image per scene group
+    group_references = {}  # {scene_group: {"image": path, "content_type": str}}
+    
+    for idx, scene in enumerate(scenes):
+        scene_number = scene.get("number", idx + 1)
+        scene_prompt = scene.get("prompt", "")
+        scene_description = scene.get("description", "")
+        scene_content_type = scene.get("content_type", "object")
+        
+        # Get scene plan info
+        scene_plan = self._get_scene_plan(scene_number, scene_plans)
+        scene_group = getattr(scene_plan, 'scene_group', 1) if scene_plan else 1
+        transition = getattr(scene_plan, 'transition', 'morph') if scene_plan else 'morph'
+        
+        if not scene_prompt:
+            self.logger.warning(f"Scene {scene_number} has empty prompt, skipping")
+            continue
+        
+        self.logger.info(f"  Scene {scene_number}/{len(scenes)} (Group {scene_group}): {scene_description}")
+        
+        # Get image tool from scene_plans
+        image_tool_name = self._get_image_tool_for_scene(
+            scene_number=scene_number,
+            scene_plans=scene_plans
+        )
+        
+        self.logger.info(f"    Tool: {image_tool_name}, Content: {scene_content_type}, Transition: {transition}")
+        
+        # For HYBRID style: Use scene group reference for character consistency
+        use_reference = None
+        if scene_content_type in ["human_portrait", "human_action"]:
+            if scene_group in group_references:
+                # Use reference from this scene group
+                ref_data = group_references[scene_group]
+                if image_tool_name == "seedream4":
+                    use_reference = ref_data["image"]
+                    self.logger.info(f"    Using Group {scene_group} reference (same character)")
+            else:
+                # First human in this scene group - will become reference
+                self.logger.info(f"    First human in Group {scene_group} (will be reference)")
+        
+        # Generate image
+        start_time = time_module.time()
+        image_path = self._generate_image(
+            prompt=scene_prompt,
+            scene_number=scene_number,
+            output_dir=output_dir,
+            image_tool_name=image_tool_name,
+            reference_image=use_reference
+        )
+        elapsed_time = time_module.time() - start_time
+        
+        # Save as reference if first human in scene group
+        if scene_content_type in ["human_portrait", "human_action"]:
+            if scene_group not in group_references:
+                group_references[scene_group] = {
+                    "image": image_path,
+                    "content_type": scene_content_type
+                }
+                self.logger.info(f"    Saved as Group {scene_group} reference")
+        
+        scene_images.append({
+            "scene_number": scene_number,
+            "scene_group": scene_group,
+            "transition": transition,
+            "image_path": image_path,
+            "description": scene_description,
+            "content_type": scene_content_type,
+            "time": int(elapsed_time)
+        })
+        
+        total_time += int(elapsed_time)
+        
+        # Estimate cost
+        if image_tool_name == "midjourney":
+            total_cost += 0.05
+        elif image_tool_name == "seedream4":
+            total_cost += 0.04
+        elif image_tool_name == "flux_dev":
+            total_cost += 0.03
+        elif image_tool_name == "flux_pro":
+            total_cost += 0.04
+    
+    self.logger.info(f"HYBRID WORKFLOW: Step 1 complete - {len(scene_images)} images, {len(group_references)} scene groups")
+    
+    # Get video tool (should be wan_flf2v for HYBRID style)
+    video_tool_name = self._get_video_tool_for_scene(
+        scene_number=1,
+        content_type="human",
+        scene_plans=scene_plans
+    )
+    
+    # Step 2: Group scenes by scene_group
+    self.logger.info(f"HYBRID WORKFLOW: Step 2/3 - Grouping scenes...")
+    
+    scene_groups = {}
+    for scene_img in scene_images:
+        group = scene_img["scene_group"]
+        if group not in scene_groups:
+            scene_groups[group] = []
+        scene_groups[group].append(scene_img)
+    
+    self.logger.info(f"  Found {len(scene_groups)} scene groups")
+    for group_num, group_scenes in scene_groups.items():
+        self.logger.info(f"    Group {group_num}: {len(group_scenes)} shots")
+    
+    # Step 3: Create morph videos within each scene group
+    self.logger.info(f"HYBRID WORKFLOW: Step 3/3 - Creating transitions...")
+    
+    scene_videos = []
+    
+    for group_num in sorted(scene_groups.keys()):
+        group_scenes = scene_groups[group_num]
+        
+        self.logger.info(f"\n  Processing Group {group_num} ({len(group_scenes)} shots)...")
+        
+        # Create morph transitions within this group
+        for i in range(len(group_scenes) - 1):
+            start_scene = group_scenes[i]
+            end_scene = group_scenes[i + 1]
+            
+            self.logger.info(f"    Morph: Scene {start_scene['scene_number']} → {end_scene['scene_number']}")
+            
+            start_time = time_module.time()
+            
+            video_result = self._create_morph_video(
+                start_image=start_scene["image_path"],
+                end_image=end_scene["image_path"],
+                scene_description=f"{start_scene['description']} to {end_scene['description']}",
+                scene_number=start_scene['scene_number'],
+                output_dir=output_dir,
+                video_tool_name=video_tool_name
+            )
+            
+            elapsed_time = time_module.time() - start_time
+            
+            scene_videos.append({
+                "video_path": video_result["video_path"],
+                "scene_group": group_num,
+                "transition": "morph",
+                "start_scene": start_scene['scene_number'],
+                "end_scene": end_scene['scene_number']
+            })
+            
+            total_cost += video_result.get("cost", 0.40)
+            total_time += int(elapsed_time)
+        
+        # Add marker for hard cut after this group (except last group)
+        if group_num < max(scene_groups.keys()):
+            self.logger.info(f"    → HARD CUT after Group {group_num}")
+    
+    self.logger.info(f"\nHYBRID WORKFLOW: Complete!")
+    self.logger.info(f"  {len(scene_videos)} morph transitions created")
+    self.logger.info(f"  {len(scene_groups)} scene groups with hard cuts between them")
+    
+    return {
+        "scene_videos": [v["video_path"] for v in scene_videos],
+        "scene_images": [img["image_path"] for img in scene_images],
+        "all_images": [img["image_path"] for img in scene_images],
+        "total_videos": len(scene_videos),
+        "total_images": len(scene_images),
+        "total_cost": total_cost,
+        "total_time": total_time,
+        "scene_groups": len(scene_groups),
+        "video_metadata": scene_videos  # For assembly with cuts
+    }
+
+
+    def _get_scene_plan(self, scene_number: int, scene_plans: List[Any]) -> Any:
+    """Get scene plan for a specific scene number."""
+    for plan in scene_plans:
+        if plan.scene_number == scene_number:
+            return plan
+    return None
+
+
     def _animate_image(
         self,
         image_path: str,

@@ -33,6 +33,9 @@ class ScenePlan:
     image_tool: str  # Tool to generate the image
     video_tool: str  # Tool to animate the image
     reasoning: str  # Why these tools were selected
+    scene_group: int = 1  # NEW: Scene grouping for HYBRID style
+    content_type: str = "general"  # NEW: human_portrait, object, product, etc.
+    transition: str = "morph"  # NEW: "morph" (within scene) or "cut" (between scenes)
 
 
 @dataclass
@@ -89,13 +92,21 @@ class WorkflowRouterV2:
             use_cases=["premium", "professional", "high detail"],
             best_for="Premium quality scenes"
         ),
-        "seedream4": ToolSpec(
-            name="seedream4",
-            description="Character consistency across scenes",
+        "instant_character": ToolSpec(
+            name="instant_character",
+            description="Strong character identity control, no multiple persons",
             cost=0.04,
             speed=30,
-            use_cases=["character", "person", "consistency"],
+            use_cases=["character", "person", "consistency", "human"],
             best_for="Multiple shots of the same person/character"
+        ),
+        "flux_kontext_pro": ToolSpec(
+            name="flux_kontext_pro",
+            description="Environment and style consistency with reference image",
+            cost=0.04,
+            speed=30,
+            use_cases=["environment", "style", "consistency", "same_location"],
+            best_for="Maintaining same environment/location across scenes"
         ),
         "ideogram": ToolSpec(
             name="ideogram",
@@ -125,13 +136,13 @@ class WorkflowRouterV2:
             use_cases=["morphs", "transitions", "creative effects"],
             best_for="Smooth transitions between states, dynamic morphs"
         ),
-        "wan_flf2v": ToolSpec(
-            name="wan_flf2v",
-            description="First-to-last frame morph transitions ($0.40/video)",
-            cost=0.40,
+        "veo31_flf2v": ToolSpec(
+            name="veo31_flf2v",
+            description="Google Veo 3.1 first-to-last frame morph ($0.80/8s video)",
+            cost=0.80,
             speed=60,
-            use_cases=["morphs", "character consistency", "smooth transitions"],
-            best_for="Character-consistent morph transitions (PIKA style)"
+            use_cases=["morphs", "character consistency", "smooth transitions", "premium"],
+            best_for="High-quality morph transitions with natural motion (HYBRID/PIKA style)"
         ),
         "minimax_hailuo": ToolSpec(
             name="minimax_hailuo",
@@ -306,9 +317,11 @@ Return a JSON object with per-scene tool selection."""
             # Validate style requirements (warnings only)
             self._validate_style_requirements(plan, video_style, scenes)
             
-            # Enforce PIKA style rules (hard constraint)
+            # Enforce style rules (hard constraint)
             if video_style == "pika":
                 plan = self._enforce_pika_style(plan)
+            elif video_style == "hybrid":
+                plan = self._enforce_hybrid_style(plan, scenes)
             
             # Apply constraints
             plan = self._apply_constraints(plan, max_cost, max_time)
@@ -565,8 +578,8 @@ Return JSON in this format:
         
         PIKA style requirements:
         - Scene 1: Midjourney (opening shot)
-        - Scenes 2+: Seedream4 (for character/visual consistency)
-        - Video tool: pika_v2 (for morph transitions)
+        - Scenes 2+: Instant Character (for character consistency)
+        - Video tool: veo31_flf2v (for high-quality morph transitions)
         
         This overrides AI recommendations to ensure visual consistency.
         """
@@ -579,20 +592,102 @@ Return JSON in this format:
                     logger.info(f"  Scene {scene_plan.scene_number}: Changed {scene_plan.image_tool} → midjourney (PIKA rule)")
                     scene_plan.image_tool = "midjourney"
             
-            # Scenes 2+: Use Seedream4 for consistency
+            # Scenes 2+: Use Instant Character for consistency
             else:
-                if scene_plan.image_tool != "seedream4":
-                    logger.info(f"  Scene {scene_plan.scene_number}: Changed {scene_plan.image_tool} → seedream4 (PIKA rule)")
-                    scene_plan.image_tool = "seedream4"
+                if scene_plan.image_tool != "instant_character":
+                    logger.info(f"  Scene {scene_plan.scene_number}: Changed {scene_plan.image_tool} → instant_character (PIKA rule)")
+                    scene_plan.image_tool = "instant_character"
             
-            # All scenes: Use wan_flf2v for video (morph transitions)
-            if scene_plan.video_tool != "wan_flf2v" and "wan_flf2v" in self.available_tools["video"]:
-                logger.info(f"  Scene {scene_plan.scene_number}: Changed {scene_plan.video_tool} → wan_flf2v (PIKA rule)")
-                scene_plan.video_tool = "wan_flf2v"
+            # All scenes: Use veo31_flf2v for video (morph transitions)
+            if scene_plan.video_tool != "veo31_flf2v" and "veo31_flf2v" in self.available_tools["video"]:
+                logger.info(f"  Scene {scene_plan.scene_number}: Changed {scene_plan.video_tool} → veo31_flf2v (PIKA rule)")
+                scene_plan.video_tool = "veo31_flf2v"
         
         # Recalculate plan after changes
         plan = self._recalculate_plan(plan)
         logger.info(f"PIKA style enforced: {len(plan.scene_plans)} scenes, cost: ${plan.estimated_cost:.2f}")
+        
+        return plan
+    
+    def _enforce_hybrid_style(self, plan: WorkflowPlan, scenes: List[Dict[str, Any]]) -> WorkflowPlan:
+        """
+        Enforce HYBRID style rules with auto scene detection.
+        
+        HYBRID style workflow:
+        1. Auto-detect scene groups (location/subject changes)
+        2. Within scene: Pika morph transitions
+        3. Between scenes: Hard cuts
+        4. Character consistency: Reference image per scene group
+        
+        Tool selection:
+        - First human in scene group: Midjourney
+        - Subsequent humans in group: Instant Character + reference
+        - First object/product in scene group: Flux Dev
+        - Subsequent objects in group: Flux Kontext Pro + environment reference
+        - Video: veo31_flf2v for high-quality morph transitions
+        """
+        from utils.scene_detection import SceneDetector
+        
+        logger.info("Enforcing HYBRID style rules with auto scene detection...")
+        
+        # Detect scene groups
+        detector = SceneDetector()
+        scenes_with_groups = detector.detect_scene_groups(scenes)
+        
+        # Log scene grouping
+        logger.info("\n" + detector.get_scene_summary(scenes_with_groups))
+        
+        # Track first scene in each group (for reference images)
+        group_first_human = {}  # {scene_group: scene_number} for human scenes
+        group_first_environment = {}  # {scene_group: scene_number} for environment scenes
+        
+        for i, scene in enumerate(scenes_with_groups):
+            scene_plan = plan.scene_plans[i]
+            scene_group = scene.get("scene_group", 1)
+            content_type = scene.get("content_type", "general")
+            transition = scene.get("transition", "morph")
+            
+            # Update scene plan with group info
+            scene_plan.scene_group = scene_group
+            scene_plan.content_type = content_type
+            scene_plan.transition = transition
+            
+            # Tool selection based on content type
+            if content_type in ["human_portrait", "human_action"]:
+                # Human scene
+                if scene_group not in group_first_human:
+                    # First human in this scene group → Midjourney
+                    group_first_human[scene_group] = scene_plan.scene_number
+                    if scene_plan.image_tool != "midjourney":
+                        logger.info(f"  Scene {scene_plan.scene_number}: {scene_plan.image_tool} → midjourney (first human in group {scene_group})")
+                        scene_plan.image_tool = "midjourney"
+                else:
+                    # Subsequent human in group → Instant Character + reference
+                    if scene_plan.image_tool != "instant_character":
+                        logger.info(f"  Scene {scene_plan.scene_number}: {scene_plan.image_tool} → instant_character (reference from scene {group_first_human[scene_group]})")
+                        scene_plan.image_tool = "instant_character"
+            else:
+                # Object/product/environment scene
+                if scene_group not in group_first_environment:
+                    # First object in this scene group → Flux Dev
+                    group_first_environment[scene_group] = scene_plan.scene_number
+                    if scene_plan.image_tool not in ["flux_dev", "flux_pro"]:
+                        logger.info(f"  Scene {scene_plan.scene_number}: {scene_plan.image_tool} → flux_dev (first object in group {scene_group})")
+                        scene_plan.image_tool = "flux_dev"
+                else:
+                    # Subsequent object in group → Flux Kontext Pro + environment reference
+                    if scene_plan.image_tool != "flux_kontext_pro":
+                        logger.info(f"  Scene {scene_plan.scene_number}: {scene_plan.image_tool} → flux_kontext_pro (environment reference from scene {group_first_environment[scene_group]})")
+                        scene_plan.image_tool = "flux_kontext_pro"
+            
+            # Video tool: veo31_flf2v for morph transitions
+            if scene_plan.video_tool != "veo31_flf2v" and "veo31_flf2v" in self.available_tools["video"]:
+                logger.info(f"  Scene {scene_plan.scene_number}: {scene_plan.video_tool} → veo31_flf2v (HYBRID morph)")
+                scene_plan.video_tool = "veo31_flf2v"
+        
+        # Recalculate plan
+        plan = self._recalculate_plan(plan)
+        logger.info(f"HYBRID style enforced: {len(plan.scene_plans)} scenes, {len(group_first_human)} scene groups, cost: ${plan.estimated_cost:.2f}")
         
         return plan
     
