@@ -29,6 +29,8 @@ class WorkflowState(TypedDict, total=False):
     brand_hub: Dict[str, Any]
     run_output_dir: str  # Run-specific output directory
     brand_identity: Optional[BrandIdentity]  # Brand identity object
+    background_music_path: Optional[str]  # Path to background music file
+    music_volume: float  # Background music volume (0.0-1.0)
     
     # Phase 1A: Research
     research_insights: Dict[str, Any]
@@ -71,7 +73,15 @@ class SocialVideoWorkflow:
     Coordinates all agents in a sequential pipeline.
     """
     
-    def __init__(self, visual_quality: str = "dev", default_language: str = "sk", run_output_dir: str = None, brand_file: Optional[str] = None):
+    def __init__(
+        self, 
+        visual_quality: str = "dev", 
+        default_language: str = "sk", 
+        run_output_dir: str = None, 
+        brand_file: Optional[str] = None,
+        background_music_path: Optional[str] = None,
+        music_volume: float = 0.15
+    ):
         """
         Initialize the workflow.
         
@@ -80,10 +90,14 @@ class SocialVideoWorkflow:
             default_language: Default language for voiceover
             run_output_dir: Run-specific output directory path
             brand_file: Optional brand identity file to load
+            background_music_path: Optional path to background music file
+            music_volume: Background music volume (0.0-1.0, default 0.15)
         """
         self.logger = logging.getLogger("workflow")
         self.run_output_dir = run_output_dir
         self.default_language = default_language
+        self.background_music_path = background_music_path
+        self.music_volume = music_volume
         
         # Load brand identity if provided
         self.brand_identity = load_brand_identity(brand_file) if brand_file else None
@@ -305,6 +319,8 @@ class SocialVideoWorkflow:
             "topic": topic,
             "brand_hub": brand_hub or self._get_default_brand_hub(),
             "run_output_dir": self.run_output_dir,
+            "background_music_path": self.background_music_path,
+            "music_volume": self.music_volume,
             "current_phase": "initialized",
             "errors": [],
         }

@@ -117,7 +117,17 @@ class ApiframeMidjourneyTool(BaseTool):
         if response.status_code != 200:
             raise Exception(f"Apiframe API error: {response.status_code} - {response.text}")
         
-        return response.json()
+        result = response.json()
+
+        # Check if response contains task ID
+        if "id" not in result and "task_id" not in result:
+            raise Exception(f"Apiframe API response missing task ID: {result}")
+
+        # Normalize response to always have 'id' field
+        if "task_id" in result and "id" not in result:
+            result["id"] = result["task_id"]
+
+        return result
     
     def _wait_for_completion(self, task_id: str, max_wait: int = 600) -> str:
         """Poll for generation completion and return image URL."""
@@ -144,7 +154,7 @@ class ApiframeMidjourneyTool(BaseTool):
             
             if status == "finished" or status == "completed":
                 # Return the first image URL from the result
-                images = data.get("result", {}).get("images", [])
+                images = data.get("image_urls", [])
                 if images:
                     return images[0]
                 raise Exception("No images in result")

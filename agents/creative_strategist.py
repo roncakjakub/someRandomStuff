@@ -293,7 +293,22 @@ Your content gets millions of views because it's PUNCHY, DIRECT, and VALUABLE.
 Output ONLY valid JSON matching the exact structure provided in the context.
 Make every word count. No fluff. Pure value.
 
-IMPORTANT: For transition scenes, use the dual-prompt format with "prompts": {"start": "...", "end": "..."} instead of single "prompt" field."""
+IMPORTANT: For transition scenes, use the dual-prompt format with "prompts": {"start": "...", "end": "..."} instead of single "prompt" field.
+
+ELEVENLABS EMOTION TAGS:
+Enhance voiceover_script and voiceover_segment with inline emotion tags for dramatic delivery:
+- [excited] for exciting moments
+- [whispers] for secrets or intimate moments  
+- [laughs] or [giggles] for humor
+- [sighs] for disappointment or relief
+- [thoughtful] for explanations
+- [curious] for questions
+- [sarcastic] for irony
+- [happy], [sad], [angry], [nervous], [calm] for emotional states
+
+Example: "e"
+
+Use tags strategically to make voiceover MORE ENGAGING and EMOTIONAL."""
         
         try:
             response = self.client.chat.completions.create(

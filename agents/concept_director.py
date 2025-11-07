@@ -121,7 +121,13 @@ For each concept, you evaluate:
 
 You think like a creative director who understands both artistry and virality.
 You balance creativity with strategic thinking.
-You always consider the target audience and platform algorithms."""
+You always consider the target audience and platform algorithms.
+
+IMPORTANT EXCLUSIONS:
+- DO NOT generate ASMR concepts (requires specialized audio equipment and techniques)
+- Focus on visual storytelling with voiceover narration
+- Concepts must work with AI-generated visuals and voice
+"""
     
     def _build_concept_prompt(
         self,

@@ -232,6 +232,19 @@ Examples:
         help="Maximum time in seconds (only with --use-router)"
     )
     
+    parser.add_argument(
+        "--background-music",
+        type=str,
+        help="Path to background music file (MP3, WAV, etc.)"
+    )
+    
+    parser.add_argument(
+        "--music-volume",
+        type=float,
+        default=0.15,
+        help="Background music volume (0.0-1.0, default 0.15 = 15%%)"
+    )
+    
     args = parser.parse_args()
     
     # Print banner
@@ -298,11 +311,15 @@ Examples:
     
     # Create workflow
     logger.info("\nInitializing workflow...")
+    
+    # Initialize workflow
     workflow = SocialVideoWorkflow(
         visual_quality=args.quality,
         default_language=args.language,
         run_output_dir=run_output_dir,
-        brand_file=args.brand_file
+        brand_file=args.brand_file,
+        background_music_path=args.background_music,
+        music_volume=args.music_volume
     )
     
     # Run workflow

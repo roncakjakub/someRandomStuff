@@ -103,18 +103,19 @@ class ElevenLabsVoiceTool(BaseTool):
         """
         Get default voice settings optimized for emotional, engaging content.
         
-        Settings tuned for social media / viral content:
-        - Lower stability = more emotion and variation
-        - Higher style = more expressive delivery
+        Settings tuned for VIRAL social media content:
+        - Lower stability = MORE emotion and natural variation
+        - Higher style = MORE expressive, dramatic delivery
+        - Speaker boost = Enhanced clarity and presence
         
         Returns:
             Dictionary with voice settings
         """
         return {
-            "stability": 0.3,          # Lower for MORE emotion (0-1) - was 0.4
-            "similarity_boost": 0.75,  # Standard quality (0-1)
-            "style": 0.6,              # Higher for MORE expression (0-1) - was 0.4
-            "use_speaker_boost": True, # Better quality
+            "stability": 0.2,          # Very low for MAXIMUM emotion (0-1) - was 0.3
+            "similarity_boost": 0.8,   # Higher for better voice quality (0-1) - was 0.75
+            "style": 0.7,              # Very high for DRAMATIC expression (0-1) - was 0.6
+            "use_speaker_boost": True, # Enhanced clarity
         }
     
     def _save_audio(self, audio_data: bytes, language: str, output_dir: str = None) -> Path:

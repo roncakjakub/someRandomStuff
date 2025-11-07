@@ -25,7 +25,9 @@ class AssemblyAgent:
         images: List[str],
         audio_path: str = None,
         duration_per_image: float = 3.0,
-        output_dir: str = None
+        output_dir: str = None,
+        background_music_path: str = None,
+        music_volume: float = 0.15
     ) -> Dict[str, Any]:
         """
         Assemble final video from components.
@@ -52,6 +54,8 @@ class AssemblyAgent:
             "audio_path": audio_path,
             "duration_per_image": duration_per_image,
             "output_dir": output_dir,
+            "background_music_path": background_music_path,
+            "music_volume": music_volume,
         })
         
         if result.get("success"):
@@ -83,6 +87,10 @@ class AssemblyAgent:
         audio_path = state.get("voiceover_audio")
         output_dir = state.get("run_output_dir")
         
+        # Get background music parameters
+        background_music_path = state.get("background_music_path")
+        music_volume = state.get("music_volume", 0.15)
+        
         # Prefer video clips over images
         if scene_videos:
             self.logger.info(f"Assembling {len(scene_videos)} video clips with transitions...")
@@ -92,7 +100,9 @@ class AssemblyAgent:
                 video_clips=scene_videos,
                 audio_path=audio_path,
                 transition_duration=0.3,  # 300ms crossfade
-                output_dir=output_dir
+                output_dir=output_dir,
+                background_music_path=background_music_path,
+                music_volume=music_volume
             )
             
             return {
@@ -126,7 +136,9 @@ class AssemblyAgent:
                 images=images,
                 audio_path=audio_path,
                 duration_per_image=duration_per_image,
-                output_dir=output_dir
+                output_dir=output_dir,
+                background_music_path=background_music_path,
+                music_volume=music_volume
             )
             
             return {

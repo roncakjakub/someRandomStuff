@@ -43,13 +43,16 @@ class VideoAssemblyTool(BaseTool):
         Assemble video from images and optional audio.
         
         Args:
-            input_data: Must contain 'images' list, optional 'audio_path', 'duration_per_image'
+            input_data: Must contain 'images' list, optional 'audio_path', 'duration_per_image',
+                       'background_music_path', 'music_volume'
             
         Returns:
             Dictionary with video file path
         """
         images = input_data["images"]
         audio_path = input_data.get("audio_path")
+        background_music_path = input_data.get("background_music_path")
+        music_volume = input_data.get("music_volume", 0.15)
         duration_per_image = input_data.get("duration_per_image", 3.0)  # seconds
         output_dir = input_data.get("output_dir")  # Custom output directory
         
@@ -60,7 +63,12 @@ class VideoAssemblyTool(BaseTool):
         
         # Add audio if provided
         if audio_path:
-            video_path = self._add_audio_to_video(video_path, audio_path)
+            video_path = self._add_audio_to_video(
+                video_path, 
+                audio_path,
+                background_music_path=background_music_path,
+                music_volume=music_volume
+            )
         
         self.logger.info(f"Video assembled: {video_path}")
         
@@ -143,13 +151,21 @@ class VideoAssemblyTool(BaseTool):
         
         return output_path
     
-    def _add_audio_to_video(self, video_path: Path, audio_path: str) -> Path:
+    def _add_audio_to_video(
+        self, 
+        video_path: Path, 
+        audio_path: str,
+        background_music_path: Optional[str] = None,
+        music_volume: float = 0.15
+    ) -> Path:
         """
-        Add audio track to video using FFMPEG.
+        Add audio track (voiceover + optional background music) to video using FFMPEG.
         
         Args:
             video_path: Path to video file
-            audio_path: Path to audio file
+            audio_path: Path to voiceover audio file
+            background_music_path: Optional path to background music file
+            music_volume: Background music volume (0.0-1.0, default 0.15 = 15%)
             
         Returns:
             Path to video with audio
@@ -157,20 +173,47 @@ class VideoAssemblyTool(BaseTool):
         # Generate output filename
         output_filename = video_path.stem.replace("_no_audio", "") + "_final.mp4"
         output_path = video_path.parent / output_filename
+
+        # Check if background music file exists
+        if background_music_path and not Path(background_music_path).exists():
+            self.logger.warning(f"Background music file not found: {background_music_path}. Skipping music.")
+            background_music_path = None
+
+        # If no background music, use simple audio addition
+        if not background_music_path:
+            cmd = [
+                "ffmpeg",
+                "-i", str(video_path),
+                "-i", audio_path,
+                "-c:v", "copy",
+                "-c:a", "aac",
+                "-shortest",
+                "-y",
+                str(output_path)
+            ]
+        else:
+            # Mix voiceover + background music
+            # Voiceover at 100%, music at music_volume (default 15%)
+            cmd = [
+                "ffmpeg",
+                "-i", str(video_path),
+                "-i", audio_path,  # Voiceover
+                "-i", background_music_path,  # Background music
+                "-filter_complex",
+                f"[2:a]volume={music_volume}[music];[1:a][music]amix=inputs=2:duration=shortest[audio]",
+                "-map", "0:v",
+                "-map", "[audio]",
+                "-c:v", "copy",
+                "-c:a", "aac",
+                "-shortest",
+                "-y",
+                str(output_path)
+            ]
         
-        # FFMPEG command to add audio
-        cmd = [
-            "ffmpeg",
-            "-i", str(video_path),
-            "-i", audio_path,
-            "-c:v", "copy",
-            "-c:a", "aac",
-            "-shortest",  # Match shortest stream (video or audio)
-            "-y",  # Overwrite output file
-            str(output_path)
-        ]
-        
-        self.logger.info(f"Adding audio to video: {' '.join(cmd)}")
+        self.logger.info(f"Adding audio to video...")
+        if background_music_path:
+            self.logger.info(f"  Voiceover: {audio_path}")
+            self.logger.info(f"  Background music: {background_music_path} (volume: {music_volume*100:.0f}%)")
         
         try:
             result = subprocess.run(
@@ -195,7 +238,9 @@ class VideoAssemblyTool(BaseTool):
         video_clips: List[str],
         audio_path: Optional[str] = None,
         transition_duration: float = 0.3,
-        output_dir: str = None
+        output_dir: str = None,
+        background_music_path: Optional[str] = None,
+        music_volume: float = 0.15
     ) -> Dict[str, Any]:
         """
         Create video with smooth crossfade transitions between video clips.
@@ -280,12 +325,23 @@ class VideoAssemblyTool(BaseTool):
             self.logger.error(f"FFMPEG error: {e.stderr}")
             # Fallback: concatenate without transitions
             self.logger.warning("Falling back to simple concatenation...")
-            return self._concatenate_videos_simple(video_clips, audio_path, output_dir)
+            return self._concatenate_videos_simple(
+                video_clips, 
+                audio_path, 
+                output_dir,
+                background_music_path=background_music_path,
+                music_volume=music_volume
+            )
         
         # Add audio if provided
         final_path = output_path
         if audio_path:
-            final_path = self._add_audio_to_video(output_path, audio_path)
+            final_path = self._add_audio_to_video(
+                output_path, 
+                audio_path,
+                background_music_path=background_music_path,
+                music_volume=music_volume
+            )
         
         return {
             "video_path": str(final_path),
@@ -298,7 +354,9 @@ class VideoAssemblyTool(BaseTool):
         self,
         video_clips: List[str],
         audio_path: Optional[str] = None,
-        output_dir: str = None
+        output_dir: str = None,
+        background_music_path: Optional[str] = None,
+        music_volume: float = 0.15
     ) -> Dict[str, Any]:
         """
         Simple video concatenation without transitions (fallback).
@@ -353,7 +411,12 @@ class VideoAssemblyTool(BaseTool):
         # Add audio if provided
         final_path = output_path
         if audio_path:
-            final_path = self._add_audio_to_video(output_path, audio_path)
+            final_path = self._add_audio_to_video(
+                output_path, 
+                audio_path,
+                background_music_path=background_music_path,
+                music_volume=music_volume
+            )
         
         return {
             "video_path": str(final_path),

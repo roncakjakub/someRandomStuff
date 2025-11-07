@@ -342,13 +342,7 @@ class VisualProductionAgent:
         Returns:
             Image tool name (e.g., "flux_dev", "midjourney")
         """
-        # CRITICAL: Scene 1 MUST use Midjourney for scroll-stopping opening frame
-        # This is a viral video best practice - override router if needed
-        if scene_number == 1:
-            self.logger.info("  🎬 Enforcing Midjourney for Scene 1 (opening frame)")
-            return "midjourney"
-        
-        # For other scenes, check router's recommendation
+        # Check router's recommendation first
         if scene_plans:
             for plan in scene_plans:
                 # Handle both dict and dataclass formats

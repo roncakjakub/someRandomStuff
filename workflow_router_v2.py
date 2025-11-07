@@ -394,11 +394,23 @@ For each of the {num_scenes} scenes, select:
 
 Consider:
 
-**IMAGE TOOL SELECTION BY PRESET:**
-- budget preset → ALWAYS use flux_schnell (fastest, cheapest)
-- standard preset → ALWAYS use flux_dev (balanced quality/cost)
-- premium preset → use flux_dev for most scenes, midjourney ONLY for key hero shots (max 2-3 scenes)
-- NEVER use seedream4 or ideogram unless explicitly premium + specific need
+**IMAGE TOOL SELECTION RULES:** ⭐ CRITICAL
+
+**Scene 1 (Opening Frame):**
+- Scene 1 MUST ALWAYS use "midjourney" regardless of preset
+- This is a viral video best practice - opening frame must be scroll-stopping
+- Exception: Only use flux_schnell if budget preset AND no midjourney available
+
+**Scenes 2-3 (Style Consistency):**
+- Should use seedream4 OR the same tool as Scene 1 for visual continuity
+- Maintains consistent lighting, color grading, and style
+- Prevents visual "drift" between opening and follow-up scenes
+
+**Scenes 4+ (Variety):**
+- budget preset → flux_schnell (fastest, cheapest)
+- standard preset → flux_dev (balanced quality/cost)
+- premium preset → flux_pro or flux_dev
+- NEVER use ideogram unless text overlay needed
 
 **VIDEO TOOL SELECTION BY CONTENT:**
 - If scene content_type is human_action/human_portrait → use minimax_hailuo
