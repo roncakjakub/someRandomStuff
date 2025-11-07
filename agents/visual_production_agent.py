@@ -643,13 +643,25 @@ class VisualProductionAgent:
         
         tool = self.video_tools[video_tool_name]
         
-        # Generate video
-        result = tool.execute({
-            "start_image": start_image,
-            "end_image": end_image,
-            "prompt": scene_description,
-            "output_dir": str(output_dir),  # Convert Path to string for JSON serialization
-        })
+        # Prepare tool input
+        # Veo31FLF2VTool expects first_frame_url/last_frame_url, others expect start_image/end_image
+        if video_tool_name == "veo31_flf2v":
+            tool_input = {
+                "first_frame_url": start_image,
+                "last_frame_url": end_image,
+                "prompt": scene_description,
+                "aspect_ratio": "9:16",  # Vertical format for social media
+            }
+            # Veo31FLF2VTool expects individual parameters, not dict
+            result = tool.execute(**tool_input)
+        else:
+            # Other video tools expect dict
+            result = tool.execute({
+                "start_image": start_image,
+                "end_image": end_image,
+                "prompt": scene_description,
+                "output_dir": str(output_dir),
+            })
         
         # Estimate cost
         cost_map = {
