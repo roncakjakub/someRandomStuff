@@ -32,7 +32,8 @@ class CreativeStrategistAgent:
         brand_hub: Dict[str, Any],
         research_insights: Dict[str, Any],
         selected_concept: Optional[Dict[str, Any]] = None,
-        brand_identity: Optional[BrandIdentity] = None
+        brand_identity: Optional[BrandIdentity] = None,
+        video_style: str = "cinematic"
     ) -> Dict[str, Any]:
         """
         Create comprehensive creative strategy and prompts for viral-style video.
@@ -48,7 +49,7 @@ class CreativeStrategistAgent:
         self.logger.info(f"Creating VIRAL-STYLE strategy for: {topic}")
         
         # Build context for GPT-4
-        context = self._build_viral_context(topic, brand_hub, research_insights, selected_concept, brand_identity)
+        context = self._build_viral_context(topic, brand_hub, research_insights, selected_concept, brand_identity, video_style)
         
         # Generate prompts using GPT-4
         prompts = self._generate_viral_prompts(context)
@@ -62,7 +63,8 @@ class CreativeStrategistAgent:
         brand_hub: Dict[str, Any],
         research_insights: Dict[str, Any],
         selected_concept: Optional[Dict[str, Any]] = None,
-        brand_identity: Optional[BrandIdentity] = None
+        brand_identity: Optional[BrandIdentity] = None,
+        video_style: str = "cinematic"
     ) -> str:
         """Build context for viral-style content creation."""
         context = f"""
@@ -183,6 +185,10 @@ You need to create prompts for 8-10 scenes using these AI tools:
    - Background adjustments
    - Final enhancements
 
+===== VIDEO STYLE: {video_style.upper()} =====
+
+{self._get_style_specific_instructions(video_style)}
+
 ===== OUTPUT FORMAT =====
 
 Generate a JSON structure with:
@@ -278,10 +284,91 @@ When you want to create a smooth morph between two different states, use `conten
 4. **Structure**: Hook → Value → Proof → CTA
 5. **Style**: Like a creator with millions of views
 6. **Transitions**: Use dual prompts for smooth morphs between states
+7. **SCENE-TO-SCENE CONSISTENCY**: Adjacent scenes should share similar style elements:
+   - Maintain similar lighting mood (natural light → natural light, dramatic → dramatic)
+   - Keep color temperature consistent (warm tones → warm tones, cool → cool)
+   - Preserve camera style (cinematic → cinematic, product shot → product shot)
+   - Example: "Scene 1: green leaves, natural light, soft focus" → "Scene 2: brown coffee beans, natural light, soft focus"
+   - Allow natural transitions between subjects, but keep lighting/mood/style similar
 
 Now create the strategy for: {topic}
 """
         return context
+    
+    def _get_style_specific_instructions(self, video_style: str) -> str:
+        """Get style-specific instructions for CHARACTER, CINEMATIC, or HYBRID."""
+        
+        if video_style == "character":
+            return """**CHARACTER STYLE REQUIREMENTS:**
+
+You MUST generate a consistent character that appears throughout ALL scenes.
+
+1. **Create Character Description:**
+   Add a top-level field: "character_description": "Detailed description of the main character"
+   Example: "Young woman, 25-30 years old, long brown hair, casual white sweater, warm smile, natural makeup"
+   
+2. **Scene 1 (Opening):**
+   - Tool: "midjourney"
+   - Include character in prompt: "Cinematic portrait, 9:16, {character_description}, {action}, morning light, hyper-realistic, film grain"
+   - Mark as: "is_opening_frame": true
+   
+3. **Scene 2+ (Consistency):**
+   - Tool: "seedream4" (uses Scene 1 as reference for same person)
+   - Prompt MUST start with: "Same person from Scene 1. {character_description}. {new action/angle}."
+   - Add: "references_scene": 1
+   - Maintain exact same person, clothing, lighting style
+   
+4. **Transitions:**
+   - ALL scenes use Pika morph transitions
+   - Content type for character scenes: "human_action" or "human_portrait"
+
+**CRITICAL:** Character description must be DETAILED and SPECIFIC (age, hair, clothing, features) so Seedream4 can maintain consistency."""
+        
+        elif video_style == "cinematic":
+            return """**CINEMATIC STYLE REQUIREMENTS:**
+
+Focus on beautiful motion and cinematography. NO consistent characters needed.
+
+1. **Scene 1 (Opening):**
+   - Tool: "midjourney"
+   - Cinematic, dramatic, scroll-stopping
+   
+2. **Scene 2+ (Motion):**
+   - Tool: "flux_dev" or "flux_pro"
+   - Focus on objects, nature, products, abstract visuals
+   - Content types: "object", "product", "abstract", "text"
+   - Avoid "human_portrait" (inconsistent faces look bad)
+   
+3. **Transitions:**
+   - Crossfade (300ms) between scenes
+   - Smooth, professional
+
+**BEST FOR:** Products, food, nature, abstract concepts, anything without people."""
+        
+        elif video_style == "hybrid":
+            return """**HYBRID STYLE REQUIREMENTS:**
+
+Smart mix of character scenes (Pika) and object scenes (Minimax).
+
+1. **Character Scenes:**
+   - If scene has consistent person: use "character_description" and "seedream4" with "references_scene": 1
+   - Content type: "human_action" or "human_portrait"
+   - Transition: Pika morph
+   
+2. **Object Scenes:**
+   - No character needed
+   - Tool: "flux_dev"
+   - Content type: "object", "product", "abstract"
+   - Transition: Crossfade
+   
+3. **Character Description (if any character scenes):**
+   - Add "character_description" field if at least one scene has a person
+   - Only apply to scenes with content_type "human_action" or "human_portrait"
+
+**BEST FOR:** Mixed content (person + product), reviews, demonstrations."""
+        
+        else:
+            return ""  # Default: no special instructions
     
     def _generate_viral_prompts(self, context: str) -> Dict[str, Any]:
         """Generate viral-style prompts using GPT-4."""

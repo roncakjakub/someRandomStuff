@@ -69,7 +69,7 @@ class Seedream4Tool(BaseTool):
         """
         prompt = input_data.get("prompt", "")
         reference_image = input_data.get("reference_image")
-        num_outputs = input_data.get("num_outputs", 4)
+        num_outputs = input_data.get("num_outputs", 1)
         output_dir = input_data.get("output_dir", OUTPUT_DIR)
         
         if not prompt:
