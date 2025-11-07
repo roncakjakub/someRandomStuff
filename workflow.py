@@ -241,7 +241,8 @@ class SocialVideoWorkflow:
                 brand_identity=self.brand_identity,  # Send brand identity
                 max_cost=None,  # TODO: Get from CLI args
                 max_time=None,  # TODO: Get from CLI args
-                quality_preset="standard"  # TODO: Get from CLI args
+                quality_preset="standard",  # TODO: Get from CLI args
+                video_style=state.get("video_style", "cinematic")  # Pass video style to Router
             )
             
             self.logger.info(f"Workflow plan created:")

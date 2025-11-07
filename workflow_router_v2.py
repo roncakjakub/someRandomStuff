@@ -206,7 +206,8 @@ class WorkflowRouterV2:
         brand_identity: Any = None,
         max_cost: Optional[float] = None,
         max_time: Optional[int] = None,
-        quality_preset: Optional[str] = None
+        quality_preset: Optional[str] = None,
+        video_style: str = "cinematic"
     ) -> WorkflowPlan:
         """
         Analyze the request and generate an optimized workflow plan with per-scene tool selection.
@@ -218,6 +219,7 @@ class WorkflowRouterV2:
             max_cost: Maximum budget in USD (optional)
             max_time: Maximum time in seconds (optional)
             quality_preset: "budget", "standard", "premium", "viral" (optional)
+            video_style: Video style preset ("character", "cinematic", "pika", "hybrid")
         
         Returns:
             WorkflowPlan with per-scene tool selection
@@ -249,7 +251,8 @@ class WorkflowRouterV2:
             video_catalog=video_catalog,
             max_cost=max_cost,
             max_time=max_time,
-            quality_preset=quality_preset
+            quality_preset=quality_preset,
+            video_style=video_style
         )
         
         # Get AI recommendation
@@ -325,7 +328,8 @@ Return a JSON object with per-scene tool selection."""
         video_catalog: str,
         max_cost: Optional[float],
         max_time: Optional[int],
-        quality_preset: Optional[str]
+        quality_preset: Optional[str],
+        video_style: str = "cinematic"
     ) -> str:
         """Build the analysis prompt for the AI."""
         
@@ -374,6 +378,7 @@ Analyze this video topic and recommend the optimal tools for EACH SCENE.
 **VIDEO REQUEST:**
 - Topic: {topic}
 - Number of scenes: {num_scenes}
+- Video style: {video_style}
 
 **SCENES:**
 {scenes_context}
