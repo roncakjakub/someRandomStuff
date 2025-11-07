@@ -358,6 +358,13 @@ class VisualProductionAgent:
                     use_reference = reference_image
                     self.logger.info(f"    Using reference image for character consistency")
             
+            # If InstantCharacter/FluxKontext but no reference, use default tool
+            # (InstantCharacter requires image_url, so it can't work without reference)
+            if scene_tool in ["instant_character", "flux_kontext_pro"] and not use_reference:
+                original_tool = scene_tool
+                scene_tool = self.default_image_tool
+                self.logger.info(f"    {original_tool} requires reference image, using {scene_tool} instead")
+            
             # Generate image
             start_time = time.time()
             image_path = self._generate_image(
