@@ -231,16 +231,29 @@ class VisualProductionAgent:
         tool = self.image_tools[tool_name]
         
         # Prepare tool input based on tool type
-        if tool_name in ["instant_character", "flux_kontext_pro"]:
-            # These tools have specific parameter names
+        if tool_name == "instant_character":
+            # InstantCharacter has specific parameter names
             tool_input = {
                 "prompt": prompt,
-                "image_size": "landscape_16_9",  # InstantCharacter uses image_size, not aspect_ratio
+                "image_size": "landscape_16_9",  # InstantCharacter uses image_size
                 # NOTE: output_path removed - we'll handle downloading after generation
             }
             # Add reference image if provided
             if reference_image:
-                tool_input["reference_image_url"] = reference_image  # InstantCharacter uses reference_image_url
+                tool_input["reference_image_url"] = reference_image
+        elif tool_name == "flux_kontext_pro":
+            # FluxKontextPro has different parameters (no image_size!)
+            tool_input = {
+                "prompt": prompt,
+                "guidance_scale": 3.5,
+                "num_inference_steps": 28,
+                # NOTE: output_path removed - we'll handle downloading after generation
+            }
+            # Add reference image if provided (required for FluxKontextPro)
+            if reference_image:
+                tool_input["reference_image_url"] = reference_image
+            else:
+                raise ValueError("FluxKontextPro requires a reference image")
         else:
             # Other tools (Flux, Midjourney, etc.)
             tool_input = {
